@@ -1,0 +1,100 @@
+## This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+## If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+---
+# Production Vault Event Monitoring
+#
+# This example demonstrates production-ready monitoring with multiple supported event types,
+# SSL verification, and advanced filtering. 
+#
+# Usage:
+#   export VAULT_ADDR="https://vault.company.com:8200"
+#   export VAULT_TOKEN="production-token"
+#   ansible-rulebook --env-vars VAULT_ADDR,VAULT_TOKEN -i inventory.yml --rulebook production-monitoring.yml
+
+- name: Production Vault Event Monitoring
+  hosts: localhost
+  gather_facts: false
+  
+  sources:
+    - gitrgoliveira.vault.vault_events:
+        vault_addr: "{{ ansible_env.VAULT_ADDR }}"
+        vault_token: "{{ ansible_env.VAULT_TOKEN }}"
+        namespace: "{{ ansible_env.VAULT_NAMESPACE | default('') }}"
+        event_paths:
+          - "kv-v2/data-*"
+          - "kv-v1/*"
+          - "database/*"
+        verify_ssl: true
+        ping_interval: 30
+        backoff_initial: 2.0
+        backoff_max: 60.0
+        headers:
+          X-Monitoring-System: "ansible-eda"
+  
+  rules:
+    - name: Critical Database Events
+      condition: >
+        event.event_type in [
+          "database/config-write",
+          "database/config-delete"
+        ]
+      action:
+        debug:
+          msg: "🚨 CRITICAL: {{ event.event_type }} - {{ event.data }}"
+        # In production, you might send to SIEM, Slack, PagerDuty, etc.
+        # uri:
+        #   url: "https://hooks.slack.com/your-webhook"
+        #   method: POST
+        #   body_format: json
+        #   body:
+        #     text: "Critical Vault event: {{ event.event_type }}"
+    
+    - name: Database Events
+      condition: event.event_type.startswith("database/")
+      action:
+        debug:
+          msg: "�️ Database: {{ event.event_type }} - {{ event.data.path | default('N/A') }}"
+    
+    - name: High-Value Secret Access
+      condition: >
+        event.event_type == "kv-v2/data-write" and 
+        (
+          event.data.path.find("/prod/") != -1 or
+          event.data.path.find("/database/") != -1 or
+          event.data.path.find("/api-keys/") != -1
+        )
+      action:
+        debug:
+          msg: "⚠️  HIGH-VALUE SECRET ACCESS: {{ event.data.path }} (version {{ event.data.metadata.version }})"
+        # Log to file for audit trail
+        lineinfile:
+          path: "/var/log/vault-audit.log"
+          line: "{{ ansible_date_time.iso8601 }}: High-value secret {{ event.event_type }} at {{ event.data.path }}"
+          create: true
+    
+    - name: Mass Secret Operations  
+      condition: event.event_type == "kv-v2/data-delete"
+      action:
+        debug:
+          msg: "🗑️  SECRET DELETED: {{ event.data.path }} - Review if intentional"
+    
+    - name: Standard KV Operations
+      condition: >
+        event.event_type in ["kv-v2/data-write", "kv-v2/data-patch"] and
+        event.data.path.find("/prod/") == -1 and
+        event.data.path.find("/database/") == -1 and
+        event.data.path.find("/api-keys/") == -1
+      action:
+        debug:
+          msg: "📝 Standard operation: {{ event.event_type }} at {{ event.data.path }}"
+    
+    - name: Unknown Events
+      condition: >
+        event.event_type not in [
+          "kv-v2/data-write", "kv-v2/data-delete", "kv-v2/data-patch",
+          "kv-v1/write", "kv-v1/delete", 
+          "database/config-write", "database/config-delete", "database/creds-create"
+        ]
+      action:
+        debug:
+          msg: "❓ Unknown event type: {{ event.event_type }} - Data: {{ event.data }}"

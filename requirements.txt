@@ -1,0 +1,64 @@
+# Ansible Event-Driven Automation Core Dependencies
+ansible==12.0.0
+ansible-core==2.19.2
+ansible-runner==2.4.1
+ansible-rulebook==1.1.7
+
+# WebSocket and HTTP Dependencies
+websockets==15.0.1
+aiohttp==3.10.11
+aiohappyeyeballs==2.6.1
+aiosignal==1.4.0
+
+# Cryptography and Security
+cryptography==45.0.7
+PyYAML==6.0.2
+
+# JSON Schema and Data Processing
+jsonschema==4.25.1
+jsonschema-specifications==2025.9.1
+dpath==2.2.0
+
+# Template and Markup Processing
+Jinja2==3.1.6
+MarkupSafe==3.0.2
+
+# Java Integration (for ansible-rulebook)
+drools-jpy==0.3.10
+jpy==1.1.0
+
+# System and Process Management
+python-daemon==3.1.2
+watchdog==6.0.0
+pexpect==4.9.0
+lockfile==0.12.2
+
+# Database Support (PostgreSQL)
+psycopg==3.2.10
+psycopg-binary==3.2.10
+
+# Utility Libraries
+attrs==25.3.0
+packaging==25.0
+setuptools==80.9.0
+wheel==0.45.1
+xxhash==3.5.0
+
+# Low-level Dependencies
+cffi==2.0.0
+pycparser==2.23
+ptyprocess==0.7.0
+
+# Async and Concurrency
+janus==1.2.0
+frozenlist==1.7.0
+multidict==6.6.4
+propcache==0.3.2
+yarl==1.20.1
+
+# Core Python Utilities
+idna==3.10
+pyparsing==3.2.3
+referencing==0.36.2
+resolvelib==1.2.0
+rpds-py==0.27.1

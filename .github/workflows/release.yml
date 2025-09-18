@@ -1,0 +1,293 @@
+name: Release Ansible Collection
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.0)'
+        required: true
+        type: string
+
+# Set explicit permissions for security
+permissions:
+  contents: write
+  id-token: write
+  checks: read
+
+jobs:
+  # Validate the collection across multiple environments before release
+  validate:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12']
+        ansible-core-version: ['2.14', '2.15', '2.16', '2.17']
+        exclude:
+          # Exclude incompatible combinations
+          - python-version: '3.12'
+            ansible-core-version: '2.14'
+          - python-version: '3.12'
+            ansible-core-version: '2.15'
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        
+    - name: Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ matrix.python-version }}-
+          ${{ runner.os }}-pip-
+        
+    - name: Install Ansible
+      run: |
+        python -m pip install --upgrade pip
+        pip install ansible-core~=${{ matrix.ansible-core-version }}.0 websockets>=10.0
+        
+    - name: Validate collection structure
+      run: |
+        cd collections/ansible_collections/gitrgoliveira/vault
+        ansible-galaxy collection build --verbose
+        
+    - name: Install collection locally for testing
+      run: |
+        cd collections/ansible_collections/gitrgoliveira/vault
+        COLLECTION_FILE=$(ls gitrgoliveira-vault-*.tar.gz)
+        ansible-galaxy collection install $COLLECTION_FILE --force
+        
+    - name: Test collection import
+      run: |
+        python -c "
+        import sys
+        sys.path.append('/home/runner/.ansible/collections/ansible_collections')
+        try:
+            from gitrgoliveira.vault.plugins.event_source.vault_events import main
+            print('✓ Collection plugin imports successfully')
+        except ImportError as e:
+            print('✗ Collection plugin import failed:', e)
+            sys.exit(1)
+        "
+
+  # Main build and publish job
+  build-and-publish:
+    runs-on: ubuntu-latest
+    needs: validate
+    environment: release
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        
+    - name: Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-release-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-release-
+          ${{ runner.os }}-pip-
+        
+    - name: Install Ansible and dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install ansible-core>=2.14 websockets>=10.0 PyYAML
+        
+    - name: Validate galaxy.yml structure
+      run: |
+        cd collections/ansible_collections/gitrgoliveira/vault
+        python -c "
+        import yaml
+        import sys
+        
+        try:
+            with open('galaxy.yml') as f:
+                data = yaml.safe_load(f)
+        except Exception as e:
+            print(f'✗ Failed to parse galaxy.yml: {e}')
+            sys.exit(1)
+        
+        required_fields = ['namespace', 'name', 'version', 'description', 'authors']
+        for field in required_fields:
+            if field not in data:
+                print(f'✗ Missing required field: {field}')
+                sys.exit(1)
+            print(f'✓ {field}: {data[field]}')
+        
+        # Validate version format
+        import re
+        if not re.match(r'^\d+\.\d+\.\d+$', data['version']):
+            print(f'✗ Version must follow semantic versioning (x.y.z): {data[\"version\"]}')
+            sys.exit(1)
+        
+        print('✓ galaxy.yml validation passed')
+        "
+        
+    - name: Validate collection structure and build
+      run: |
+        cd collections/ansible_collections/gitrgoliveira/vault
+        ansible-galaxy collection build --verbose
+        
+    - name: Install collection locally for validation
+      run: |
+        cd collections/ansible_collections/gitrgoliveira/vault
+        COLLECTION_FILE=$(ls gitrgoliveira-vault-*.tar.gz)
+        ansible-galaxy collection install $COLLECTION_FILE --force
+        
+    - name: Run comprehensive collection tests
+      run: |
+        # Test collection import
+        python -c "
+        import sys
+        sys.path.append('/home/runner/.ansible/collections/ansible_collections')
+        try:
+            from gitrgoliveira.vault.plugins.event_source.vault_events import main
+            print('✓ Collection plugin imports successfully')
+        except ImportError as e:
+            print('✗ Collection plugin import failed:', e)
+            sys.exit(1)
+        "
+        
+        # Test required dependencies
+        python -c "
+        try:
+            import websockets
+            print('✓ websockets dependency available')
+        except ImportError:
+            print('✗ websockets dependency missing')
+            sys.exit(1)
+        "
+        
+    - name: Get version from galaxy.yml
+      id: get_version
+      run: |
+        cd collections/ansible_collections/gitrgoliveira/vault
+        VERSION=$(python -c "import yaml; print(yaml.safe_load(open('galaxy.yml'))['version'])")
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Collection version: $VERSION"
+        
+    - name: Validate version (if manually triggered)
+      if: github.event_name == 'workflow_dispatch'
+      run: |
+        GALAXY_VERSION="${{ steps.get_version.outputs.version }}"
+        INPUT_VERSION="${{ github.event.inputs.version }}"
+        if [ "$GALAXY_VERSION" != "$INPUT_VERSION" ]; then
+          echo "Error: Version mismatch!"
+          echo "galaxy.yml version: $GALAXY_VERSION"
+          echo "Input version: $INPUT_VERSION"
+          echo "Please update the version in galaxy.yml to match the input version."
+          exit 1
+        fi
+        
+    - name: Create release tag (if workflow_dispatch)
+      if: github.event_name == 'workflow_dispatch'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git tag -a "v${{ github.event.inputs.version }}" -m "Release v${{ github.event.inputs.version }}"
+        git push origin "v${{ github.event.inputs.version }}"
+        
+    - name: Build final collection
+      run: |
+        cd collections/ansible_collections/gitrgoliveira/vault
+        rm -f gitrgoliveira-vault-*.tar.gz
+        ansible-galaxy collection build --verbose
+        COLLECTION_FILE=$(ls gitrgoliveira-vault-*.tar.gz)
+        echo "Built collection: $COLLECTION_FILE"
+        echo "COLLECTION_FILE=$COLLECTION_FILE" >> $GITHUB_ENV
+        
+        # Verify tarball contents
+        tar -tzf "$COLLECTION_FILE" | head -20
+        echo "Collection tarball size: $(du -h "$COLLECTION_FILE" | cut -f1)"
+        
+    - name: Validate collection tarball
+      run: |
+        cd collections/ansible_collections/gitrgoliveira/vault
+        # Check tarball size (Galaxy limit is 2MB)
+        SIZE_BYTES=$(stat -c%s "$COLLECTION_FILE")
+        SIZE_MB=$((SIZE_BYTES / 1024 / 1024))
+        if [ $SIZE_BYTES -gt 2097152 ]; then
+          echo "Error: Collection tarball is ${SIZE_MB}MB, exceeds Galaxy 2MB limit"
+          exit 1
+        fi
+        echo "✓ Collection tarball size OK: ${SIZE_MB}MB"
+        
+    - name: Publish to Ansible Galaxy
+      env:
+        GALAXY_API_KEY: ${{ secrets.GALAXY_API_KEY }}
+      run: |
+        cd collections/ansible_collections/gitrgoliveira/vault
+        if [ -z "$GALAXY_API_KEY" ]; then
+          echo "Error: GALAXY_API_KEY secret not set"
+          echo "Please add your Ansible Galaxy API key as a repository secret"
+          echo "Get your API key from: https://galaxy.ansible.com/me/preferences"
+          exit 1
+        fi
+        
+        echo "Publishing collection to Ansible Galaxy..."
+        # Use --wait to get immediate feedback on publish status
+        ansible-galaxy collection publish "$COLLECTION_FILE" --api-key "$GALAXY_API_KEY" --wait
+        echo "✓ Collection published successfully to Ansible Galaxy!"
+        
+    - name: Upload collection artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ansible-collection-${{ steps.get_version.outputs.version }}
+        path: collections/ansible_collections/gitrgoliveira/vault/gitrgoliveira-vault-*.tar.gz
+        retention-days: 90
+        
+    - name: Create GitHub release (if workflow_dispatch)
+      if: github.event_name == 'workflow_dispatch'
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v${{ github.event.inputs.version }}
+        name: Release v${{ github.event.inputs.version }}
+        body: |
+          ## Ansible Collection Release v${{ github.event.inputs.version }}
+          
+          ### 🚀 Installation
+          ```bash
+          ansible-galaxy collection install gitrgoliveira.vault:${{ github.event.inputs.version }}
+          ```
+          
+          ### 📋 Requirements
+          - **HashiCorp Vault Enterprise** 1.13+ or **HCP Vault Dedicated**
+          - Python 3.9+
+          - ansible-core >= 2.14
+          - ansible-rulebook >= 1.0.0
+          - websockets >= 10.0
+          
+          ### 📝 Changes
+          See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/collections/ansible_collections/gitrgoliveira/vault/CHANGELOG.md) for detailed changes.
+          
+          ### 🔗 Links
+          - [Documentation](https://github.com/${{ github.repository }}/blob/main/README.md)
+          - [Ansible Galaxy](https://galaxy.ansible.com/ui/repo/published/gitrgoliveira/vault/)
+          - [Examples](https://github.com/${{ github.repository }}/tree/main/collections/ansible_collections/gitrgoliveira/vault/examples)
+          
+          ### ⚡ Quick Start
+          1. Install the collection: `ansible-galaxy collection install gitrgoliveira.vault`
+          2. Set environment variables: `export VAULT_ADDR=https://vault.example.com VAULT_TOKEN=your-token`
+          3. Run the rulebook: `ansible-rulebook --rulebook vault-eda-rulebook.yaml --env-vars VAULT_ADDR,VAULT_TOKEN`
+          
+        files: |
+          collections/ansible_collections/gitrgoliveira/vault/gitrgoliveira-vault-*.tar.gz
+        draft: false
+        prerelease: false
+        make_latest: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

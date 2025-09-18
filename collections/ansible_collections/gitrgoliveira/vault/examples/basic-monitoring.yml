@@ -1,0 +1,50 @@
+## This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+## If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+---
+# Basic Vault Event Monitoring
+# 
+# This example demonstrates basic monitoring of HashiCorp Vault events
+# using the vault_events plugin.
+#
+# Usage:
+#   export VAULT_ADDR="http://127.0.0.1:8200"
+#   export VAULT_TOKEN="myroot"
+#   ansible-rulebook --env-vars VAULT_ADDR,VAULT_TOKEN -i inventory.yml --rulebook basic-monitoring.yml
+
+- name: Basic Vault Event Monitoring
+  hosts: localhost
+  gather_facts: false
+  
+  sources:
+    - gitrgoliveira.vault.vault_events:
+        vault_addr: "{{ ansible_env.VAULT_ADDR | default('http://127.0.0.1:8200') }}"
+        vault_token: "{{ ansible_env.VAULT_TOKEN }}"
+        event_paths:
+          - "kv-v2/data-*"
+        verify_ssl: false
+        ping_interval: 20
+  
+  rules:
+    - name: Log KV Write Events
+      condition: event.event_type == "kv-v2/data-write"
+      action:
+        debug:
+          msg: "🔑 Secret WRITTEN to {{ event.data.path }} (version {{ event.data.metadata.version }})"
+    
+    - name: Log KV Delete Events  
+      condition: event.event_type == "kv-v2/data-delete"
+      action:
+        debug:
+          msg: "🗑️  Secret DELETED from {{ event.data.path }}"
+    
+    - name: Log KV Patch Events
+      condition: event.event_type == "kv-v2/data-patch"
+      action:
+        debug:
+          msg: "✏️  Secret PATCHED at {{ event.data.path }} (version {{ event.data.metadata.version }})"
+    
+    - name: Log All Other Events
+      condition: event.event_type not in ["kv-v2/data-write", "kv-v2/data-delete", "kv-v2/data-patch"]
+      action:
+        debug:
+          msg: "ℹ️  Other event: {{ event.event_type }}"

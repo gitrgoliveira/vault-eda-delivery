@@ -1,0 +1,83 @@
+---
+# Vault Event-Driven Automation Rulebook
+# This rulebook connects to HashiCorp Vault's WebSocket event stream
+# and processes KV v2 and Database events in real-time
+# Note: Each event pattern creates a separate WebSocket connection
+# Supported event types: kv-v1/*, kv-v2/*, database/*
+
+- name: react-to-vault-events
+  hosts: localhost
+  sources:
+    # Custom Vault WebSocket event source plugin
+    - gitrgoliveira.vault.vault_events:
+        # Vault server URL - configured via environment variable VAULT_ADDR
+        vault_addr: "{{ VAULT_ADDR | default('http://127.0.0.1:8200') }}"
+        # Vault authentication token - configured via environment variable VAULT_TOKEN
+        vault_token: "{{ VAULT_TOKEN | default('myroot') }}"
+        # Event subscription paths (each pattern gets its own WebSocket connection)
+        event_paths:
+          - "kv-v2/*"           # Subscribe to all KV v2 events (Connection 1)
+          - "database/*"        # Subscribe to all database events (Connection 2)
+        # WebSocket connection settings
+        verify_ssl: false        # Disable SSL verification for dev environments
+        ping_interval: 20        # WebSocket ping interval in seconds
+        backoff_initial: 1       # Initial reconnection backoff in seconds
+        backoff_max: 30          # Maximum reconnection backoff in seconds
+  rules:
+    # Rule 1: Handle KV v2 write operations (create/update secrets)
+    - name: on kv write
+      condition: event.data.event_type == "kv-v2/data-write"
+      action:
+        debug:
+          msg: >
+            KV Write Event -
+            Path: {{ event.data.event.metadata.path }},
+            Data Path: {{ event.data.event.metadata.data_path }},
+            Operation: {{ event.data.event.metadata.operation }},
+            Version: {{ event.data.event.metadata.current_version }}
+
+    # Rule 2: Handle KV v2 delete operations (soft delete secrets)
+    - name: on kv delete
+      condition: event.data.event_type == "kv-v2/data-delete"
+      action:
+        debug:
+          msg: >
+            KV Delete Event -
+            Path: {{ event.data.event.metadata.path }},
+            Operation: {{ event.data.event.metadata.operation }}
+
+    # Rule 3: Handle KV v2 patch operations (partial updates)
+    - name: on kv patch
+      condition: event.data.event_type == "kv-v2/data-patch"
+      action:
+        debug:
+          msg: >
+            KV Patch Event -
+            Path: {{ event.data.event.metadata.path }},
+            Data Path: {{ event.data.event.metadata.data_path }},
+            Operation: {{ event.data.event.metadata.operation }}
+
+    # Rule 4: Handle database events
+    - name: on database event
+      condition: event.data.event_type is defined and event.data.event_type is match("database/.*")
+      action:
+        debug:
+          msg: >
+            Database Event -
+            Type: {{ event.data.event_type }},
+            Plugin: {{ event.data.plugin_info.plugin | default('N/A') }},
+            Mount: {{ event.data.plugin_info.mount_path | default('N/A') }},
+            Operation: {{ event.data.event.metadata.operation | default('N/A') }},
+            Path: {{ event.data.event.metadata.path | default('N/A') }}
+
+    # Rule 5: Catch-all rule for any Vault event (for debugging/monitoring)
+    - name: on any vault event
+      condition: event.data is defined
+      action:
+        debug:
+          msg: >
+            Vault Event -
+            Type: {{ event.data.event_type }},
+            Plugin: {{ event.data.plugin_info.plugin | default('N/A') }},
+            Mount: {{ event.data.plugin_info.mount_path | default('N/A') }},
+            Time: {{ event.time | default('N/A') }}
