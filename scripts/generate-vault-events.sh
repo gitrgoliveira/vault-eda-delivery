@@ -121,7 +121,7 @@ generate_metadata_events() {
     
     # Update metadata
     print_status "Updating metadata for secret: $SECRET_PATH/users/john"
-    vault kv metadata put secret/users/john max-versions=10 delete-version-after=720h
+    vault kv metadata put -max-versions=10 -delete-version-after=720h secret/users/john
     wait_with_countdown 2 "Waiting for event processing..."
 }
 

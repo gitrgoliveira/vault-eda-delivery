@@ -122,6 +122,7 @@ test-events:
 # Clean up everything
 clean: stop-vault stop-rulebook
 	@echo "Cleaning up..."
+	@rm -rf .venv/
 	@rm -f vault.log vault.pid rulebook.log rulebook.pid
 	@echo "Cleanup complete!"
 
