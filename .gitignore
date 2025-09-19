@@ -3,5 +3,5 @@
 .ansible/
 *.log
 *.pid
-RELEASE.md
 .github/copilot-instructions.md
+.github/instructions/style.instructions.md
