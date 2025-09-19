@@ -29,7 +29,7 @@ assignees: ''
 - [ ] Release artifacts are uploaded.
 
 ### Post-Release
-- [ ] Installation is tested: `ansible-galaxy collection install gitrgoliveira.vault:[VERSION]`.
+- [ ] Installation is tested: `ansible-galaxy collection install gitrgoliveira.vault_eda:[VERSION]`.
 - [ ] Collection is visible on [Ansible Galaxy](https://galaxy.ansible.com/gitrgoliveira/vault).
 - [ ] Documentation is updated with the new version number.
 

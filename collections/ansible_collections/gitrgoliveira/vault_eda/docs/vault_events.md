@@ -82,7 +82,7 @@ When using with `ansible-rulebook --env-vars`, the following environment variabl
 - name: Monitor Vault Events
   hosts: localhost
   sources:
-    - gitrgoliveira.vault.vault_events:
+    - gitrgoliveira.vault_eda.vault_events:
         vault_addr: "http://127.0.0.1:8200"
         vault_token: "myroot"
         event_paths:
@@ -103,7 +103,7 @@ When using with `ansible-rulebook --env-vars`, the following environment variabl
 - name: Monitor Vault with Environment Variables
   hosts: localhost
   sources:
-    - gitrgoliveira.vault.vault_events:
+    - gitrgoliveira.vault_eda.vault_events:
         vault_addr: "{{ ansible_env.VAULT_ADDR }}"
         vault_token: "{{ ansible_env.VAULT_TOKEN }}"
         event_paths:
@@ -125,7 +125,7 @@ When using with `ansible-rulebook --env-vars`, the following environment variabl
 - name: Production Vault Monitoring
   hosts: localhost
   sources:
-    - gitrgoliveira.vault.vault_events:
+    - gitrgoliveira.vault_eda.vault_events:
         vault_addr: "https://vault.company.com:8200"
         vault_token: "{{ vault_token }}"
         namespace: "production"
@@ -161,7 +161,7 @@ When using with `ansible-rulebook --env-vars`, the following environment variabl
 - name: Secure Vault Connection
   hosts: localhost
   sources:
-    - gitrgoliveira.vault.vault_events:
+    - gitrgoliveira.vault_eda.vault_events:
         vault_addr: "https://vault.example.com:8200"
         vault_token: "{{ vault_token }}"
         verify_ssl: true  # Enable SSL verification
@@ -183,7 +183,7 @@ When using with `ansible-rulebook --env-vars`, the following environment variabl
 - name: Development Vault Monitoring
   hosts: localhost
   sources:
-    - gitrgoliveira.vault.vault_events:
+    - gitrgoliveira.vault_eda.vault_events:
         vault_addr: "https://localhost:8200"
         vault_token: "dev-token"
         verify_ssl: false  # Disable SSL verification for development

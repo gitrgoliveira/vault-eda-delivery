@@ -16,7 +16,7 @@
   gather_facts: false
   
   sources:
-    - gitrgoliveira.vault.vault_events:
+    - gitrgoliveira.vault_eda.vault_events:
         vault_addr: "{{ ansible_env.VAULT_ADDR }}"
         vault_token: "{{ ansible_env.VAULT_TOKEN }}"
         namespace: "{{ ansible_env.VAULT_NAMESPACE | default('') }}"

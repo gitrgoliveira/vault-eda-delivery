@@ -9,7 +9,7 @@
   hosts: localhost
   sources:
     # Custom Vault WebSocket event source plugin
-    - gitrgoliveira.vault.vault_events:
+    - gitrgoliveira.vault_eda.vault_events:
         # Vault server URL - configured via environment variable VAULT_ADDR
         vault_addr: "{{ VAULT_ADDR | default('http://127.0.0.1:8200') }}"
         # Vault authentication token - configured via environment variable VAULT_TOKEN

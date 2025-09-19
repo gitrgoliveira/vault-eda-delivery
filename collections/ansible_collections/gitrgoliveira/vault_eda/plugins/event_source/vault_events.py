@@ -121,7 +121,7 @@ EXAMPLES = """
 # Basic usage with local Vault Enterprise - single KV pattern
 - name: Monitor local Vault KV events
   sources:
-    - gitrgoliveira.vault.vault_events:
+    - gitrgoliveira.vault_eda.vault_events:
         vault_addr: "http://127.0.0.1:8200"
         vault_token: "myroot"
         event_paths:
@@ -130,7 +130,7 @@ EXAMPLES = """
 # Database credential rotation monitoring - single database pattern
 - name: Monitor database credential events
   sources:
-    - gitrgoliveira.vault.vault_events:
+    - gitrgoliveira.vault_eda.vault_events:
         vault_addr: "{{ ansible_env.VAULT_ADDR }}"
         vault_token: "{{ ansible_env.VAULT_TOKEN }}"
         event_paths:
@@ -139,7 +139,7 @@ EXAMPLES = """
 # Production setup with SSL and namespace - all supported events
 - name: Monitor production Vault - all supported events
   sources:
-    - gitrgoliveira.vault.vault_events:
+    - gitrgoliveira.vault_eda.vault_events:
         vault_addr: "https://vault.company.com:8200"
         vault_token: "{{ vault_token }}"
         namespace: "production"
@@ -151,7 +151,7 @@ EXAMPLES = """
 # Multiple supported event patterns - creates separate connections
 - name: Monitor KV and Database events with separate connections
   sources:
-    - gitrgoliveira.vault.vault_events:
+    - gitrgoliveira.vault_eda.vault_events:
         vault_addr: "{{ ansible_env.VAULT_ADDR }}"
         vault_token: "{{ ansible_env.VAULT_TOKEN }}"
         event_paths:
@@ -162,7 +162,7 @@ EXAMPLES = """
 # Development setup with self-signed certs - specific KV events
 - name: Development monitoring
   sources:
-    - gitrgoliveira.vault.vault_events:
+    - gitrgoliveira.vault_eda.vault_events:
         vault_addr: "https://localhost:8200"
         vault_token: "dev-token"
         verify_ssl: false
@@ -172,7 +172,7 @@ EXAMPLES = """
 # Legacy KV v1 events monitoring
 - name: Monitor KV v1 events
   sources:
-    - gitrgoliveira.vault.vault_events:
+    - gitrgoliveira.vault_eda.vault_events:
         vault_addr: "https://vault.company.com:8200"
         vault_token: "{{ vault_token }}"
         event_paths:
@@ -181,7 +181,7 @@ EXAMPLES = """
 # Specific database credential events only
 - name: Monitor database credential creation
   sources:
-    - gitrgoliveira.vault.vault_events:
+    - gitrgoliveira.vault_eda.vault_events:
         vault_addr: "{{ ansible_env.VAULT_ADDR }}"
         vault_token: "{{ ansible_env.VAULT_TOKEN }}"
         event_paths:

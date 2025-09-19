@@ -135,8 +135,8 @@ dev: setup-env start-vault
 # Collection build and release targets
 build-collection:
 	@echo "Building Ansible collection..."
-	@cd collections/ansible_collections/gitrgoliveira/vault && \
-	rm -f gitrgoliveira-vault-*.tar.gz && \
+	@cd collections/ansible_collections/gitrgoliveira/vault_eda && \
+	rm -f gitrgoliveira-vault_eda-*.tar.gz && \
 	ansible-galaxy collection build
 	@echo "Collection built successfully!"
 
@@ -148,8 +148,8 @@ publish-collection:
 		echo "Then run: export GALAXY_API_KEY=your_api_key_here"; \
 		exit 1; \
 	fi
-	@cd collections/ansible_collections/gitrgoliveira/vault && \
-	COLLECTION_FILE=$$(ls gitrgoliveira-vault-*.tar.gz 2>/dev/null | head -1) && \
+	@cd collections/ansible_collections/gitrgoliveira/vault_eda && \
+	COLLECTION_FILE=$$(ls gitrgoliveira-vault_eda-*.tar.gz 2>/dev/null | head -1) && \
 	if [ -z "$$COLLECTION_FILE" ]; then \
 		echo "Error: No collection file found. Run 'make build-collection' first."; \
 		exit 1; \

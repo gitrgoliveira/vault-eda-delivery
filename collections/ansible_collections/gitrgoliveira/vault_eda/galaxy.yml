@@ -1,12 +1,12 @@
 namespace: gitrgoliveira
-name: vault
+name: vault_eda
 version: 0.0.1
 description: HashiCorp Vault Enterprise Event-Driven Automation plugin for agentless rotation of Vault secrets, using real-time event monitoring via WebSocket
 readme: README.md
-repository: https://github.com/gitrgoliveira/vault-ansible-eda
-homepage: https://github.com/gitrgoliveira/vault-ansible-eda
-documentation: https://github.com/gitrgoliveira/vault-ansible-eda/blob/main/README.md
-issues: https://github.com/gitrgoliveira/vault-ansible-eda/issues
+repository: https://github.com/gitrgoliveira/vault-eda-delivery
+homepage: https://github.com/gitrgoliveira/vault-eda-delivery
+documentation: https://github.com/gitrgoliveira/vault-eda-delivery/blob/main/README.md
+issues: https://github.com/gitrgoliveira/vault-eda-delivery/issues
 authors:
   - Ricardo Oliveira <ricardo@example.com>
 license:

@@ -1,6 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
-# If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-# Ansible Collection - gitrgoliveira.vault
+# Ansible Collection - gitrgoliveira.vault_eda
 
 This collection provides event source plugins for HashiCorp Vault integration with Ansible Event-Driven Automation (EDA) for agentless rotation of Vault secrets through real-time event monitoring.
 
@@ -16,7 +14,7 @@ This collection provides event source plugins for HashiCorp Vault integration wi
 
 ## Description
 
-The `gitrgoliveira.vault` collection allows for agentless secret rotation and real-time monitoring of HashiCorp Vault events through WebSocket connections. It provides an event source plugin that connects to Vault's `/v1/sys/events/subscribe` endpoint and processes events in real-time for use with ansible-rulebook to trigger automated secret rotation workflows.
+The `gitrgoliveira.vault_eda` collection allows for agentless secret rotation and real-time monitoring of HashiCorp Vault events through WebSocket connections. It provides an event source plugin that connects to Vault's `/v1/sys/events/subscribe` endpoint and processes events in real-time for use with ansible-rulebook to trigger automated secret rotation workflows.
 
 ## Features
 
@@ -74,7 +72,7 @@ vault token create -policy=eda-automation
 ## Installation
 
 ```bash
-ansible-galaxy collection install gitrgoliveira.vault
+ansible-galaxy collection install gitrgoliveira.vault_eda
 ```
 
 ## Plugins
@@ -107,7 +105,7 @@ Monitor HashiCorp Vault events in real-time via WebSocket connection.
 - name: Monitor Vault KV Events
   hosts: localhost
   sources:
-    - gitrgoliveira.vault.vault_events:
+    - gitrgoliveira.vault_eda.vault_events:
         vault_addr: "{{ ansible_env.VAULT_ADDR | default('http://127.0.0.1:8200') }}"
         vault_token: "{{ ansible_env.VAULT_TOKEN }}"
         event_paths:
@@ -201,7 +199,7 @@ For development environments with self-signed certificates:
 
 ```yaml
 sources:
-  - gitrgoliveira.vault.vault_events:
+  - gitrgoliveira.vault_eda.vault_events:
       vault_addr: "https://vault.example.com:8200"
       vault_token: "{{ vault_token }}"
       verify_ssl: false  # Disable SSL verification
@@ -217,7 +215,7 @@ Enable debug logging in your rulebook:
   hosts: localhost
   gather_facts: false
   sources:
-    - gitrgoliveira.vault.vault_events:
+    - gitrgoliveira.vault_eda.vault_events:
         vault_addr: "{{ ansible_env.VAULT_ADDR }}"
         vault_token: "{{ ansible_env.VAULT_TOKEN }}"
   

@@ -32,14 +32,14 @@ jobs:
         
     - name: Validate collection structure
       run: |
-        cd collections/ansible_collections/gitrgoliveira/vault
-        rm -f gitrgoliveira-vault-*.tar.gz
+        cd collections/ansible_collections/gitrgoliveira/vault_eda
+        rm -f gitrgoliveira-vault_eda-*.tar.gz
         ansible-galaxy collection build --verbose --force
         
     - name: Install collection locally
       run: |
-        cd collections/ansible_collections/gitrgoliveira/vault
-        COLLECTION_FILE=$(ls gitrgoliveira-vault-*.tar.gz)
+        cd collections/ansible_collections/gitrgoliveira/vault_eda
+        COLLECTION_FILE=$(ls gitrgoliveira-vault_eda-*.tar.gz)
         ansible-galaxy collection install $COLLECTION_FILE --force
         
     - name: Test collection import
@@ -48,7 +48,7 @@ jobs:
         import sys
         sys.path.append('/home/runner/.ansible/collections/ansible_collections')
         try:
-            from gitrgoliveira.vault.plugins.event_source.vault_events import main
+            from gitrgoliveira.vault_eda.plugins.event_source.vault_events import main
             print('✓ Collection plugin imports successfully')
         except ImportError as e:
             print('✗ Collection plugin import failed:', e)
@@ -57,7 +57,7 @@ jobs:
         
     - name: Validate galaxy.yml
       run: |
-        cd collections/ansible_collections/gitrgoliveira/vault
+        cd collections/ansible_collections/gitrgoliveira/vault_eda
         python -c "
         import yaml
         with open('galaxy.yml') as f:

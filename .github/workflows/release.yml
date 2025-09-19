@@ -60,14 +60,14 @@ jobs:
         
     - name: Validate collection structure
       run: |
-        cd collections/ansible_collections/gitrgoliveira/vault
-        rm -f gitrgoliveira-vault-*.tar.gz
+        cd collections/ansible_collections/gitrgoliveira/vault_eda
+        rm -f gitrgoliveira-vault_eda-*.tar.gz
         ansible-galaxy collection build --verbose --force
         
     - name: Install collection locally for testing
       run: |
-        cd collections/ansible_collections/gitrgoliveira/vault
-        COLLECTION_FILE=$(ls gitrgoliveira-vault-*.tar.gz)
+        cd collections/ansible_collections/gitrgoliveira/vault_eda
+        COLLECTION_FILE=$(ls gitrgoliveira-vault_eda-*.tar.gz)
         ansible-galaxy collection install $COLLECTION_FILE --force
         
     - name: Test collection import
@@ -76,7 +76,7 @@ jobs:
         import sys
         sys.path.append('/home/runner/.ansible/collections/ansible_collections')
         try:
-            from gitrgoliveira.vault.plugins.event_source.vault_events import main
+            from gitrgoliveira.vault_eda.plugins.event_source.vault_events import main
             print('✓ Collection plugin imports successfully')
         except ImportError as e:
             print('✗ Collection plugin import failed:', e)
@@ -113,7 +113,7 @@ jobs:
         
     - name: Validate galaxy.yml structure
       run: |
-        cd collections/ansible_collections/gitrgoliveira/vault
+        cd collections/ansible_collections/gitrgoliveira/vault_eda
         python -c "
         import yaml
         import sys
@@ -143,14 +143,14 @@ jobs:
         
     - name: Validate collection structure and build
       run: |
-        cd collections/ansible_collections/gitrgoliveira/vault
-        rm -f gitrgoliveira-vault-*.tar.gz
+        cd collections/ansible_collections/gitrgoliveira/vault_eda
+        rm -f gitrgoliveira-vault_eda-*.tar.gz
         ansible-galaxy collection build --verbose --force
         
     - name: Install collection locally for validation
       run: |
-        cd collections/ansible_collections/gitrgoliveira/vault
-        COLLECTION_FILE=$(ls gitrgoliveira-vault-*.tar.gz)
+        cd collections/ansible_collections/gitrgoliveira/vault_eda
+        COLLECTION_FILE=$(ls gitrgoliveira-vault_eda-*.tar.gz)
         ansible-galaxy collection install $COLLECTION_FILE --force
         
     - name: Run comprehensive collection tests
@@ -160,7 +160,7 @@ jobs:
         import sys
         sys.path.append('/home/runner/.ansible/collections/ansible_collections')
         try:
-            from gitrgoliveira.vault.plugins.event_source.vault_events import main
+            from gitrgoliveira.vault_eda.plugins.event_source.vault_events import main
             print('✓ Collection plugin imports successfully')
         except ImportError as e:
             print('✗ Collection plugin import failed:', e)
@@ -180,7 +180,7 @@ jobs:
     - name: Get version from galaxy.yml
       id: get_version
       run: |
-        cd collections/ansible_collections/gitrgoliveira/vault
+        cd collections/ansible_collections/gitrgoliveira/vault_eda
         VERSION=$(python -c "import yaml; print(yaml.safe_load(open('galaxy.yml'))['version'])")
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "Collection version: $VERSION"
@@ -218,10 +218,10 @@ jobs:
         
     - name: Build final collection
       run: |
-        cd collections/ansible_collections/gitrgoliveira/vault
-        rm -f gitrgoliveira-vault-*.tar.gz
+        cd collections/ansible_collections/gitrgoliveira/vault_eda
+        rm -f gitrgoliveira-vault_eda-*.tar.gz
         ansible-galaxy collection build --verbose --force
-        COLLECTION_FILE=$(ls gitrgoliveira-vault-*.tar.gz)
+        COLLECTION_FILE=$(ls gitrgoliveira-vault_eda-*.tar.gz)
         echo "Built collection: $COLLECTION_FILE"
         echo "COLLECTION_FILE=$COLLECTION_FILE" >> $GITHUB_ENV
         
@@ -231,7 +231,7 @@ jobs:
         
     - name: Validate collection tarball
       run: |
-        cd collections/ansible_collections/gitrgoliveira/vault
+        cd collections/ansible_collections/gitrgoliveira/vault_eda
         # Check tarball size (Galaxy limit is 2MB)
         SIZE_BYTES=$(stat -c%s "$COLLECTION_FILE")
         SIZE_MB=$((SIZE_BYTES / 1024 / 1024))
@@ -245,7 +245,7 @@ jobs:
       env:
         GALAXY_API_KEY: ${{ secrets.GALAXY_API_KEY }}
       run: |
-        cd collections/ansible_collections/gitrgoliveira/vault
+        cd collections/ansible_collections/gitrgoliveira/vault_eda
         if [ -z "$GALAXY_API_KEY" ]; then
           echo "Error: GALAXY_API_KEY secret not set"
           echo "Please add your Ansible Galaxy API key as a repository secret"
@@ -261,7 +261,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: ansible-collection-${{ steps.get_version.outputs.version }}
-        path: collections/ansible_collections/gitrgoliveira/vault/gitrgoliveira-vault-*.tar.gz
+        path: collections/ansible_collections/gitrgoliveira/vault_eda/gitrgoliveira-vault_eda-*.tar.gz
         retention-days: 90
         
     - name: Create GitHub release (if workflow_dispatch)
@@ -275,7 +275,7 @@ jobs:
           
           ### 🚀 Installation
           ```bash
-          ansible-galaxy collection install gitrgoliveira.vault:${{ github.event.inputs.version }}
+          ansible-galaxy collection install gitrgoliveira.vault_eda:${{ github.event.inputs.version }}
           ```
           
           ### 📋 Requirements
@@ -294,12 +294,12 @@ jobs:
           - [Examples](https://github.com/${{ github.repository }}/tree/main/collections/ansible_collections/gitrgoliveira/vault/examples)
           
           ### ⚡ Quick Start
-          1. Install the collection: `ansible-galaxy collection install gitrgoliveira.vault`
+          1. Install the collection: `ansible-galaxy collection install gitrgoliveira.vault_eda`
           2. Set environment variables: `export VAULT_ADDR=https://vault.example.com VAULT_TOKEN=your-token`
           3. Run the rulebook: `ansible-rulebook --rulebook vault-eda-rulebook.yaml --env-vars VAULT_ADDR,VAULT_TOKEN`
           
         files: |
-          collections/ansible_collections/gitrgoliveira/vault/gitrgoliveira-vault-*.tar.gz
+          collections/ansible_collections/gitrgoliveira/vault_eda/gitrgoliveira-vault_eda-*.tar.gz
         draft: false
         prerelease: false
         make_latest: true
