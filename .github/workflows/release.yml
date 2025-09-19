@@ -204,7 +204,10 @@ jobs:
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         
-        # Check if tag already exists
+        # Fetch tags to check remote tags
+        git fetch --tags
+        
+        # Check if tag already exists (locally or remotely)
         if git rev-parse "v${{ github.event.inputs.version }}" >/dev/null 2>&1; then
           echo "Tag v${{ github.event.inputs.version }} already exists, skipping tag creation"
         else
