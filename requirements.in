@@ -1,0 +1,15 @@
+ansible-rulebook<1.2.0
+ansible
+websockets
+aiohttp>=3.12.14
+cryptography
+PyYAML
+jsonschema
+dpath
+Jinja2
+drools-jpy
+python-daemon
+watchdog
+pexpect
+lockfile
+psycopg[binary]
