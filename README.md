@@ -1,16 +1,16 @@
 # Vault Event-Driven Automation Delivery
 
-This repository provides a comprehensive solution for **agentless rotation of HashiCorp Vault secrets** using Ansible Event-Driven Automation (EDA). It includes a custom WebSocket plugin that connects to Vault's event streaming endpoint and processes events in real-time to enable automated secret rotation workflows.
+This repository provides tools for agentless rotation of HashiCorp Vault secrets using Ansible Event-Driven Automation (EDA). It includes a custom WebSocket plugin that connects to Vault's event streaming endpoint and processes events in real-time for automated secret rotation workflows.
 
-## 🚨 Requirements
+## Requirements
 
 ### Vault Enterprise or HCP Vault Dedicated
 
-**Important**: This solution requires **HashiCorp Vault Enterprise** or **HCP Vault Dedicated**. Event streaming is **not available** in Vault Community Edition.
+**Important**: This setup requires **HashiCorp Vault Enterprise** or **HCP Vault Dedicated**. Event streaming is **not available** in Vault Community Edition.
 
 - **Vault Enterprise**: Version 1.13+ (enabled by default in 1.16+)
 - **HCP Vault Dedicated**: Event streaming supported
-- **Vault OSS/Community**: ❌ **Not supported**
+- **Vault OSS/Community**: Not supported
 
 For Vault Enterprise versions 1.13-1.15, event notifications may need to be enabled with the `events.alpha1` experiment flag:
 
@@ -89,17 +89,13 @@ vault token create -policy=eda-automation -ttl=24h
 
 ## Features
 
-- 🔄 **Agentless Secret Rotation**: Automated secret rotation triggered by Vault events
-- 🌐 **Real-time Event Streaming**: WebSocket connection to Vault's `/v1/sys/events/subscribe` endpoint
-- 🏢 **Enterprise Ready**: Built for Vault Enterprise and HCP Vault Dedicated
-- 🔧 **Environment Variable Configuration**: Dynamic configuration using `VAULT_ADDR` and `VAULT_TOKEN` via `--env-vars`
-- 📊 **Multiple Event Types**: Support for KV v2, database, auth, and system events
-- 🔧 **Background Processing**: Run rulebooks in background with proper process management and PID tracking
-- 🛠️ **Development Automation**: Complete Makefile-based workflow for setup and testing
-- 📝 **Comprehensive Logging**: Detailed logging for debugging and monitoring with structured output
-- 🏗️ **Collection Architecture**: Proper Ansible collection structure for the custom plugin
-- 🔄 **Auto-Reconnection**: WebSocket reconnection with exponential backoff for reliability
-- 🔐 **Secure Authentication**: Token-based authentication with proper ACL support
+- **Agentless Secret Rotation**: Automated secret rotation triggered by Vault events.
+- **Real-time Event Streaming**: WebSocket connection to Vault's `/v1/sys/events/subscribe` endpoint.
+- **Environment Variable Configuration**: Dynamic configuration using `VAULT_ADDR` and `VAULT_TOKEN` via `--env-vars`.
+- **Supported Event Types**: Support for KV v1, KV v2, and database events.
+- **Development Automation**: Makefile-based workflow for setup and testing.
+- **Collection Architecture**: Ansible collection structure for the custom plugin.
+- **Auto-Reconnection**: WebSocket reconnection with exponential backoff for reliability.
 
 ## Quick Start
 
@@ -137,7 +133,7 @@ tail -f rulebook.log
 
 ### Environment Variables
 
-The system uses environment variables for dynamic configuration via ansible-rulebook's `--env-vars` parameter:
+The system uses environment variables for dynamic configuration with ansible-rulebook's `--env-vars` parameter:
 
 - `VAULT_ADDR`: Vault server URL (default: `http://127.0.0.1:8200`)
 - `VAULT_TOKEN`: Vault authentication token (default: `myroot`)
@@ -179,7 +175,7 @@ event_paths:
 
 ## Makefile Targets
 
-The project includes a comprehensive Makefile for automation:
+The project includes a Makefile for automation:
 
 ```bash
 # Environment setup
@@ -205,10 +201,8 @@ make clean              # Stop all processes and clean up log files
 
 ### Component Overview
 
-### Component Overview
-
 ```
-vault-ansible-delivery/
+vault-eda-delivery/
 ├── collections/
 │   └── ansible_collections/
 │       └── gitrgoliveira/
@@ -224,18 +218,18 @@ vault-ansible-delivery/
 └── README.md                                        # Documentation
 ```
 
-- **vault-eda-rulebook.yaml**: Main rulebook configuration with environment variable integration
-- **collections/ansible_collections/gitrgoliveira/vault/plugins/event_source/vault_events.py**: Custom WebSocket event source plugin
-- **scripts/generate-vault-events.sh**: Event generation script for testing
-- **Makefile**: Comprehensive automation for development workflow
+- **vault-eda-rulebook.yaml**: Main rulebook configuration with environment variable integration.
+- **collections/ansible_collections/gitrgoliveira/vault/plugins/event_source/vault_events.py**: Custom WebSocket event source plugin.
+- **scripts/generate-vault-events.sh**: Event generation script for testing.
+- **Makefile**: Automation for development workflow.
 
 ### Event Flow
 
-1. **Vault Events**: Generated by KV v2 operations (create, update, delete, patch)
-2. **WebSocket Stream**: Real-time event streaming via `/v1/sys/events/subscribe`
-3. **Custom Plugin**: Processes WebSocket messages and forwards to ansible-rulebook
-4. **Rule Engine**: Matches events against conditions and triggers actions
-5. **Debug Output**: Structured logging of captured events
+1. **Vault Events**: Generated by KV v2 operations (create, update, delete, patch).
+2. **WebSocket Stream**: Real-time event streaming with `/v1/sys/events/subscribe`.
+3. **Custom Plugin**: Processes WebSocket messages and forwards them to ansible-rulebook.
+4. **Rule Engine**: Matches events against conditions and triggers actions.
+5. **Debug Output**: Structured logging of captured events.
 
 ## Python Environment Setup
 
@@ -244,7 +238,8 @@ A Python virtual environment is configured with the required Ansible packages.
 ### Activate the Virtual Environment
 
 ```bash
-cd /Users/ricardo/repos/sse/vault-ansible-delivery
+# Change to the project directory
+cd /path/to/vault-eda-delivery
 source .venv/bin/activate
 ```
 
@@ -296,7 +291,7 @@ deactivate
 
 ### Common Issues
 
-1. **Event Streaming Not Available**: Verify you're using Vault Enterprise or HCP Vault Dedicated
+1. **Event Streaming Not Available**: Verify you are using Vault Enterprise or HCP Vault Dedicated.
    ```bash
    # Check Vault version and edition
    vault version
@@ -305,7 +300,7 @@ deactivate
    vault events subscribe kv-v2/data-test
    ```
 
-2. **ACL Permission Denied**: Ensure your token has the required policies
+2. **ACL Permission Denied**: Ensure your token has the required policies.
    ```bash
    # Check token capabilities
    vault token capabilities sys/events/subscribe/kv-v2/data-*
@@ -314,24 +309,24 @@ deactivate
    # Should return: ["read"] for events, ["list", "subscribe"] for secrets
    ```
 
-3. **Java/JNI Error**: Ensure `DYLD_LIBRARY_PATH` is set correctly
+3. **Java/JNI Error**: Ensure `DYLD_LIBRARY_PATH` is set correctly.
    ```bash
    export DYLD_LIBRARY_PATH="$JAVA_HOME/lib/server:$DYLD_LIBRARY_PATH"
    ```
 
-4. **WebSocket Connection Failed**: Check Vault is running and accessible
+4. **WebSocket Connection Failed**: Check that Vault is running and accessible.
    ```bash
    make status-vault
    curl -s http://127.0.0.1:8200/v1/sys/health
    ```
 
-5. **Environment Variables Not Working**: Verify variables are exported
+5. **Environment Variables Not Working**: Verify that the variables are exported.
    ```bash
    echo $VAULT_ADDR
    echo $VAULT_TOKEN
    ```
 
-6. **Rulebook Not Starting**: Check background process status
+6. **Rulebook Not Starting**: Check the background process status.
    ```bash
    ps aux | grep ansible-rulebook
    tail -f rulebook.log
@@ -353,67 +348,6 @@ KV Write Event - Path: secret/data/test, Data Path: secret/data/test, Operation:
 ********************************************************************************
 ```
 
-## Collection Release Process
-
-The project features a comprehensive, automated release workflow with multi-environment testing and enhanced security measures. For detailed release procedures, see **[RELEASE.md](RELEASE.md)**.
-
-### Quick Release Guide
-
-#### Local Development Release
-
-```bash
-# Build and test the collection locally
-make build-collection
-
-# Publish to Ansible Galaxy (requires GALAXY_API_KEY)
-export GALAXY_API_KEY="your_api_key_here"
-make publish-collection
-
-# Or do both in one step
-make release-collection
 ```
 
-#### Automated GitHub Release (Recommended)
-
-The repository includes **enhanced GitHub Actions** with comprehensive validation:
-
-1. **Manual Release Workflow**: 
-   - Go to Actions → "Release Ansible Collection" → "Run workflow"
-   - Enter the version number (e.g., "1.0.1")
-   - **Matrix testing** across 4 Python versions × 4 Ansible Core versions
-   - **Comprehensive validation** including security checks and dependency verification
-
-2. **Automated Tag Release**:
-   - Create and push a git tag: `git tag v1.0.1 && git push origin v1.0.1`
-   - Same comprehensive validation and testing pipeline
-
-#### Enhanced Workflow Features
-
-✅ **Multi-Matrix Validation**: Python 3.9-3.12 × Ansible Core 2.14-2.17  
-✅ **Security Hardening**: Minimal permissions, environment protection  
-✅ **Comprehensive Testing**: Structure, imports, dependencies, size validation  
-✅ **Automated Publishing**: Galaxy + GitHub releases with rich release notes  
-✅ **Artifact Management**: Collection packages with 90-day retention  
-✅ **Rollback Support**: Comprehensive troubleshooting and recovery procedures  
-
-#### Prerequisites for Automated Release
-
-1. **Set up GALAXY_API_KEY secret**:
-   - Get your API key from [Ansible Galaxy](https://galaxy.ansible.com/me/preferences)
-   - Add it as a repository secret: Settings → Secrets and variables → Actions
-   - Secret name: `GALAXY_API_KEY`
-
-2. **Update version in galaxy.yml**:
-   ```yaml
-   version: 1.0.1  # Follow semantic versioning
-   ```
-
-3. **Update CHANGELOG.md** with detailed release notes
-
-#### Supported Environments
-
-- **Python**: 3.9, 3.10, 3.11, 3.12
-- **Ansible Core**: 2.14 (LTS), 2.15, 2.16, 2.17
-- **Automatic compatibility validation** and exclusion of incompatible combinations
-
-For complete release documentation, troubleshooting guides, and best practices, see **[RELEASE.md](RELEASE.md)**.
+## Troubleshooting

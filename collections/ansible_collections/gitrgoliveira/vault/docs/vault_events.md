@@ -1,5 +1,3 @@
-# This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
-# If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 # vault_events Event Source Plugin
 
 The `vault_events` plugin provides real-time monitoring of HashiCorp Vault events through WebSocket connections for agentless secret rotation workflows.
@@ -10,16 +8,19 @@ The `vault_events` plugin provides real-time monitoring of HashiCorp Vault event
 
 - **Vault Enterprise**: Version 1.13+ (enabled by default in 1.16+)
 - **HCP Vault Dedicated**: Event streaming supported
-- **Vault OSS/Community**: ❌ **Not supported**
+- **Vault OSS/Community**: **Not supported**
 
 ## Synopsis
 
-- Connects to Vault's `/v1/sys/events/subscribe` endpoint via WebSocket
-- Monitors various event types including KV operations, database events, authentication, and policy changes
-- Enables agentless secret rotation triggered by real-time events
-- Provides automatic reconnection with exponential backoff
-- Supports secure SSL/TLS connections with configurable verification
-- Integrates with ansible-rulebook environment variable system
+- Connects to Vault's `/v1/sys/events/subscribe` endpoint with a WebSocket.
+- Monitors KV operations and database events for agentless secret rotation.
+- **IMPORTANT**: Vault's WebSocket API supports only one event pattern per connection.
+- **Multiple event_paths will create separate WebSocket connections for each pattern**.
+- **SUPPORTED EVENT TYPES**: Only `kv-v1/*`, `kv-v2/*`, and `database/*` are officially supported.
+- Allows for agentless secret rotation triggered by real-time events.
+- Provides automatic reconnection with exponential backoff.
+- Supports secure SSL/TLS connections with configurable verification.
+- Integrates with the ansible-rulebook environment variable system.
 
 ## Parameters
 
@@ -27,34 +28,43 @@ The `vault_events` plugin provides real-time monitoring of HashiCorp Vault event
 |-----------|------|----------|---------|-------------|
 | `vault_addr` | string | yes | - | Vault server URL (e.g., "http://127.0.0.1:8200") |
 | `vault_token` | string | yes | - | Vault authentication token |
-| `event_paths` | list | no | ["kv-v2/data-*"] | List of event paths to subscribe to |
-| `verify_ssl` | boolean | no | true | Whether to verify SSL certificates |
+| `event_paths` | list | no | `["kv-v2/data-*"]` | List of event paths to subscribe to (separate connection per pattern). |
+| `verify_ssl` | boolean | no | `true` | Whether to verify SSL certificates. |
 | `ping_interval` | integer | no | 20 | WebSocket ping interval in seconds |
 | `backoff_initial` | float | no | 1.0 | Initial reconnection delay in seconds |
 | `backoff_max` | float | no | 30.0 | Maximum reconnection delay in seconds |
 | `namespace` | string | no | - | Vault namespace for multi-tenant setups |
-| `headers` | dict | no | {} | Additional HTTP headers for the connection |
+| `headers` | dict | no | `{}` | Additional HTTP headers for the connection. |
 
 ## Event Paths
 
-The plugin supports various event path patterns:
+**IMPORTANT**: Only officially supported event types can be used with this plugin. For the complete and current list of supported event types, see the [HashiCorp Vault Event Notifications documentation](https://developer.hashicorp.com/vault/docs/concepts/events).
+
+The plugin supports the following categories of events:
 
 ### KV v2 Events
+- `kv-v2/*` - All KV v2 events
 - `kv-v2/data-*` - All KV v2 data operations
-- `kv-v2/data-write` - KV v2 write operations
-- `kv-v2/data-delete` - KV v2 delete operations
-- `kv-v2/data-patch` - KV v2 patch operations
-- `kv-v2/metadata-*` - KV v2 metadata operations
 
 ### KV v1 Events
-- `kv-v1/write` - KV v1 write operations
-- `kv-v1/delete` - KV v1 delete operations
+- `kv-v1/*` - All KV v1 events
 
 ### Database Events
-- `database/creds-create` - Database credential creation
-- `database/rotate` - Database credential rotation
-- `database/config-*` - Database configuration changes
-- `database/role-*` - Database role operations
+- `database/*` - All database events
+
+### Performance Note
+For optimal performance, use single patterns with wildcards (e.g., `kv-v2/*`, `database/*`, `*`) rather than multiple specific patterns. Each pattern creates a separate WebSocket connection.
+
+**For detailed event types and metadata**: See the [official event types table](https://developer.hashicorp.com/vault/docs/concepts/events#event-types) in the HashiCorp documentation.
+
+## WebSocket Connection Behavior
+
+**Critical Understanding**: Vault's WebSocket API has an important limitation:
+
+- **One pattern per WebSocket connection**: Each event pattern in `event_paths` creates a separate WebSocket connection.
+- **Multiple patterns = Multiple connections**: If you specify `["kv-v2/*", "database/*", "kv-v1/*"]`, three separate WebSocket connections will be established.
+- **Resource implications**: Each connection consumes server resources and client connections.
+- **Best practice**: Use broader patterns with wildcards when possible (e.g., `*` for all events, `kv-v2/*` for all KV v2 events).
 
 ## Environment Variables
 
@@ -190,7 +200,9 @@ When using with `ansible-rulebook --env-vars`, the following environment variabl
 
 ## Event Structure
 
-Events received from Vault have the following general structure:
+Events received from Vault follow the [CloudEvents specification](https://cloudevents.io/) and have a structured format. For complete details on the event structure and metadata fields, see the [HashiCorp Vault Event Notifications Format documentation](https://developer.hashicorp.com/vault/docs/concepts/events#event-notifications-format).
+
+Here's a basic example of the event structure you'll receive:
 
 ```json
 {
@@ -206,6 +218,8 @@ Events received from Vault have the following general structure:
   }
 }
 ```
+
+**For complete event structure details**: See the [official event notifications format](https://developer.hashicorp.com/vault/docs/concepts/events#event-notifications-format) in the HashiCorp documentation.
 
 ## Troubleshooting
 
@@ -226,6 +240,8 @@ Events received from Vault have the following general structure:
    curl -H "X-Vault-Token: $VAULT_TOKEN" \
         $VAULT_ADDR/v1/sys/events/subscribe/kv-v2/data-test
    ```
+
+   For more details on the API endpoint, see the [Event Streaming API documentation](https://developer.hashicorp.com/vault/api-docs/system/events).
 
 ### SSL Certificate Issues
 
@@ -265,14 +281,16 @@ rules:
 
 ## Notes
 
-- The plugin automatically handles WebSocket reconnection with exponential backoff
-- SSL/TLS verification can be disabled for development environments
-- Multiple event paths can be specified to monitor different types of events
-- Environment variables provide flexible configuration for different deployment environments
-- The plugin is designed for high availability with robust error handling
+- The plugin automatically handles WebSocket reconnection with exponential backoff.
+- SSL/TLS verification can be disabled for development environments.
+- **Multiple event paths create separate WebSocket connections - use patterns with wildcards for better performance**.
+- Environment variables provide flexible configuration for different deployment environments.
+- The plugin is designed for high availability with error handling.
+- Only `kv-v1/*`, `kv-v2/*`, and `database/*` event types are officially supported by Vault Enterprise.
 
 ## See Also
 
-- [HashiCorp Vault Event Streaming Documentation](https://developer.hashicorp.com/vault/api-docs/system/events)
-- [Ansible Event-Driven Automation](https://ansible.readthedocs.io/projects/rulebook/)
-- [WebSocket Protocol Specification](https://tools.ietf.org/html/rfc6455)
+- [HashiCorp Vault Event Notifications Documentation](https://developer.hashicorp.com/vault/docs/concepts/events) - Official documentation for event types and format
+- [HashiCorp Vault Event Streaming API](https://developer.hashicorp.com/vault/api-docs/system/events) - API documentation for event subscription
+- [Ansible Event-Driven Automation](https://ansible.readthedocs.io/projects/rulebook/) - Official Ansible EDA documentation
+- [WebSocket Protocol Specification](https://tools.ietf.org/html/rfc6455) - WebSocket protocol reference

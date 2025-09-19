@@ -2,9 +2,9 @@
 # If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 # Ansible Collection - gitrgoliveira.vault
 
-This collection provides event source plugins for HashiCorp Vault integration with Ansible Event-Driven Automation (EDA) to enable **agentless rotation of Vault secrets** through real-time event monitoring.
+This collection provides event source plugins for HashiCorp Vault integration with Ansible Event-Driven Automation (EDA) for agentless rotation of Vault secrets through real-time event monitoring.
 
-## 🚨 Requirements
+## Requirements
 
 ### Vault Enterprise or HCP Vault Dedicated Only
 
@@ -12,22 +12,22 @@ This collection provides event source plugins for HashiCorp Vault integration wi
 
 - **Vault Enterprise**: Version 1.13+ (enabled by default in 1.16+)
 - **HCP Vault Dedicated**: Event streaming supported
-- **Vault OSS/Community**: ❌ **Not supported**
+- **Vault OSS/Community**: Not supported
 
 ## Description
 
-The `gitrgoliveira.vault` collection enables agentless secret rotation and real-time monitoring of HashiCorp Vault events through WebSocket connections. It provides a robust event source plugin that connects to Vault's `/v1/sys/events/subscribe` endpoint and processes events in real-time for use with ansible-rulebook to trigger automated secret rotation workflows.
+The `gitrgoliveira.vault` collection allows for agentless secret rotation and real-time monitoring of HashiCorp Vault events through WebSocket connections. It provides an event source plugin that connects to Vault's `/v1/sys/events/subscribe` endpoint and processes events in real-time for use with ansible-rulebook to trigger automated secret rotation workflows.
 
 ## Features
 
-- 🔄 **Agentless Secret Rotation**: Automated secret rotation triggered by Vault events
-- 🌐 **Real-time Event Streaming**: WebSocket connection to Vault's event subscription endpoint
-- 🏢 **Enterprise Ready**: Built for Vault Enterprise and HCP Vault Dedicated
-- 🔧 **Flexible Configuration**: Support for environment variables and dynamic configuration
-- 📊 **Multiple Event Types**: Monitor KV v2, database, authentication, and system events
-- 🔐 **Secure Authentication**: Support for Vault tokens with proper ACL policies
-- 🛠️ **Auto-Reconnection**: Built-in reconnection logic with exponential backoff
-- 📝 **Comprehensive Logging**: Detailed logging for debugging and monitoring
+- **Agentless Secret Rotation**: Automated secret rotation triggered by Vault events.
+- **Real-time Event Streaming**: WebSocket connection to Vault's event subscription endpoint.
+- **Enterprise Ready**: Built for Vault Enterprise and HCP Vault Dedicated.
+- **Flexible Configuration**: Support for environment variables and dynamic configuration.
+- **Supported Event Types**: Monitor KV v1, KV v2, and database events.
+- **Secure Authentication**: Support for Vault tokens with ACL policies.
+- **Auto-Reconnection**: Built-in reconnection logic with exponential backoff.
+- **Comprehensive Logging**: Detailed logging for debugging and monitoring.
 
 ## Requirements
 
@@ -89,11 +89,14 @@ Monitor HashiCorp Vault events in real-time via WebSocket connection.
 
 - `vault_addr` (string, required): Vault server URL (e.g., "http://127.0.0.1:8200")
 - `vault_token` (string, required): Vault authentication token
-- `event_paths` (list, optional): List of event paths to subscribe to (default: ["kv-v2/data-*"])
-- `verify_ssl` (boolean, optional): Whether to verify SSL certificates (default: true)
-- `ping_interval` (integer, optional): WebSocket ping interval in seconds (default: 20)
-- `backoff_initial` (float, optional): Initial reconnection delay in seconds (default: 1.0)
-- `backoff_max` (float, optional): Maximum reconnection delay in seconds (default: 30.0)
+- `event_paths` (list, optional): List of event paths to subscribe to (default: `["kv-v2/data-*"]`). 
+  - **IMPORTANT**: Each pattern creates a separate WebSocket connection.
+  - **Supported types**: Only `kv-v1/*`, `kv-v2/*`, and `database/*` are officially supported.
+  - **Performance tip**: Use broader patterns with wildcards for better performance.
+- `verify_ssl` (boolean, optional): Whether to verify SSL certificates (default: `true`).
+- `ping_interval` (integer, optional): WebSocket ping interval in seconds (default: 20).
+- `backoff_initial` (float, optional): Initial reconnection delay in seconds (default: 1.0).
+- `backoff_max` (float, optional): Maximum reconnection delay in seconds (default: 30.0).
 - `namespace` (string, optional): Vault namespace for multi-tenant setups
 - `headers` (dict, optional): Additional HTTP headers for the connection
 
@@ -129,7 +132,7 @@ Monitor HashiCorp Vault events in real-time via WebSocket connection.
 
 ## Environment Variables
 
-The plugin supports dynamic configuration via environment variables when used with ansible-rulebook's `--env-vars` flag:
+The plugin supports dynamic configuration through environment variables when used with ansible-rulebook's `--env-vars` flag:
 
 ```bash
 export VAULT_ADDR="http://127.0.0.1:8200"
@@ -140,11 +143,14 @@ ansible-rulebook --env-vars VAULT_ADDR,VAULT_TOKEN -i inventory.yml --rulebook v
 
 ## Event Types
 
-The plugin can monitor the following officially supported Vault Enterprise event types:
+The plugin supports officially supported Vault Enterprise event types. For the complete and current list of supported event types, see the [HashiCorp Vault Event Notifications documentation](https://developer.hashicorp.com/vault/docs/concepts/events#event-types).
 
-- **KV v2 Events**: `kv-v2/data-write`, `kv-v2/data-delete`, `kv-v2/data-patch`, `kv-v2/metadata-*`
-- **KV v1 Events**: `kv-v1/write`, `kv-v1/delete`
-- **Database Events**: `database/creds-create`, `database/rotate`, `database/config-*`, `database/role-*`
+**Supported categories:**
+- **KV v2 Events**: `kv-v2/*` (all KV v2 operations)
+- **KV v1 Events**: `kv-v1/*` (all KV v1 operations)  
+- **Database Events**: `database/*` (all database operations)
+
+**For detailed event types and metadata**: See the [official event types table](https://developer.hashicorp.com/vault/docs/concepts/events#event-types) in the HashiCorp documentation.
 
 ## Troubleshooting
 
@@ -153,19 +159,17 @@ The plugin can monitor the following officially supported Vault Enterprise event
 1. **Verify Vault Enterprise is running and accessible**:
    ```bash
    curl -s $VAULT_ADDR/v1/sys/health
-   vault version  # Should show Enterprise edition
+   vault version
    ```
 
 2. **Check token permissions for event subscription**:
    ```bash
    vault token capabilities sys/events/subscribe/kv-v2/data-*
-   # Should return: ["read"]
    ```
 
 3. **Check secret access permissions**:
    ```bash
    vault token capabilities secret/data/myapp
-   # Should return: ["list", "subscribe"] or more
    ```
 
 4. **Verify event streaming is available (Enterprise only)**:
