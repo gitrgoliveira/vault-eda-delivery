@@ -46,12 +46,6 @@ path "database/creds/*" {
     capabilities = ["list", "subscribe", "read"]
     subscribe_event_types = ["database/*"]
 }
-
-# For dynamic secrets monitoring
-path "aws/creds/*" {
-    capabilities = ["list", "subscribe", "read"]
-    subscribe_event_types = ["*"]
-}
 ```
 
 #### 3. Complete Example Policy
