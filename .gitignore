@@ -1,7 +1,7 @@
-./github/copilot-instructions.md
 .vscode/
 .venv/
 .ansible/
 *.log
 *.pid
 RELEASE.md
+.github/copilot-instructions.md
