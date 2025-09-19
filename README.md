@@ -150,7 +150,7 @@ export VAULT_TOKEN=hvs.staging.token.here
 
 ### Event Subscription
 
-Configure which Vault events to monitor in `vault-eda-rulebook.yaml`. The following event types are available in Vault Enterprise:
+Configure which Vault events to monitor in `vault-eda-rulebook.yaml`. The following examples show common event types available in Vault Enterprise. For a complete and up-to-date list, refer to the [official Vault documentation on Event Notifications](https://developer.hashicorp.com/vault/docs/concepts/events).
 
 ```yaml
 event_paths:
