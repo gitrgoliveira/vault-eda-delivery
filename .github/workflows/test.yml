@@ -30,7 +30,7 @@ jobs:
     - name: Validate collection structure
       run: |
         cd collections/ansible_collections/gitrgoliveira/vault
-        ansible-galaxy collection build --verbose
+        ansible-galaxy collection build --verbose --force
         
     - name: Install collection locally
       run: |
