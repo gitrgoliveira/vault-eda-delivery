@@ -26,6 +26,10 @@ jobs:
         ansible-core-version: ['2.14', '2.15', '2.16', '2.17']
         exclude:
           # Exclude incompatible combinations
+          - python-version: '3.9'
+            ansible-core-version: '2.16'
+          - python-version: '3.9'
+            ansible-core-version: '2.17'
           - python-version: '3.12'
             ansible-core-version: '2.14'
           - python-version: '3.12'
@@ -82,7 +86,6 @@ jobs:
   build-and-publish:
     runs-on: ubuntu-latest
     needs: validate
-    environment: release
     
     steps:
     - name: Checkout repository
