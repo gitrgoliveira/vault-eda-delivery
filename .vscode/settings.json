@@ -1,5 +1,0 @@
-{
-    "python.analysis.typeCheckingMode": "standard",
-    "python-envs.pythonProjects": [],
-    "ansible.python.interpreterPath": "/Users/ricardo/repos/sse/vault-ansible-delivery/.venv/bin/python"
-}
