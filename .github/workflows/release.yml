@@ -61,7 +61,8 @@ jobs:
     - name: Validate collection structure
       run: |
         cd collections/ansible_collections/gitrgoliveira/vault
-        ansible-galaxy collection build --verbose
+        rm -f gitrgoliveira-vault-*.tar.gz
+        ansible-galaxy collection build --verbose --force
         
     - name: Install collection locally for testing
       run: |
@@ -143,7 +144,8 @@ jobs:
     - name: Validate collection structure and build
       run: |
         cd collections/ansible_collections/gitrgoliveira/vault
-        ansible-galaxy collection build --verbose
+        rm -f gitrgoliveira-vault-*.tar.gz
+        ansible-galaxy collection build --verbose --force
         
     - name: Install collection locally for validation
       run: |
@@ -208,7 +210,7 @@ jobs:
       run: |
         cd collections/ansible_collections/gitrgoliveira/vault
         rm -f gitrgoliveira-vault-*.tar.gz
-        ansible-galaxy collection build --verbose
+        ansible-galaxy collection build --verbose --force
         COLLECTION_FILE=$(ls gitrgoliveira-vault-*.tar.gz)
         echo "Built collection: $COLLECTION_FILE"
         echo "COLLECTION_FILE=$COLLECTION_FILE" >> $GITHUB_ENV
