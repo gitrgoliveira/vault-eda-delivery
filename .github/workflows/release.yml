@@ -203,8 +203,15 @@ jobs:
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git tag -a "v${{ github.event.inputs.version }}" -m "Release v${{ github.event.inputs.version }}"
-        git push origin "v${{ github.event.inputs.version }}"
+        
+        # Check if tag already exists
+        if git rev-parse "v${{ github.event.inputs.version }}" >/dev/null 2>&1; then
+          echo "Tag v${{ github.event.inputs.version }} already exists, skipping tag creation"
+        else
+          echo "Creating new tag v${{ github.event.inputs.version }}"
+          git tag -a "v${{ github.event.inputs.version }}" -m "Release v${{ github.event.inputs.version }}"
+          git push origin "v${{ github.event.inputs.version }}"
+        fi
         
     - name: Build final collection
       run: |
@@ -293,5 +300,8 @@ jobs:
         draft: false
         prerelease: false
         make_latest: true
+        fail_on_unmatched_files: false
+        generate_release_notes: false
+        append_body: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
