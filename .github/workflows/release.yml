@@ -244,8 +244,7 @@ jobs:
         fi
         
         echo "Publishing collection to Ansible Galaxy..."
-        # Use --wait to get immediate feedback on publish status
-        ansible-galaxy collection publish "$COLLECTION_FILE" --api-key "$GALAXY_API_KEY" --wait
+        ansible-galaxy collection publish "$COLLECTION_FILE" --api-key "$GALAXY_API_KEY"
         echo "✓ Collection published successfully to Ansible Galaxy!"
         
     - name: Upload collection artifact
