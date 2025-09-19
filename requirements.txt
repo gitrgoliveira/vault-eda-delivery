@@ -6,7 +6,7 @@ ansible-rulebook==1.1.7
 
 # WebSocket and HTTP Dependencies
 websockets==15.0.1
-aiohttp==3.10.11
+aiohttp==3.12.14
 aiohappyeyeballs==2.6.1
 aiosignal==1.4.0
 
