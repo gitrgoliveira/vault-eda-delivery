@@ -1,4 +1,4 @@
-# vault_events Event Source Plugin
+# vault_events event source plugin
 
 The `vault_events` plugin provides real-time monitoring of HashiCorp Vault events through WebSocket connections for agentless secret rotation workflows.
 
@@ -36,28 +36,28 @@ The `vault_events` plugin provides real-time monitoring of HashiCorp Vault event
 | `namespace` | string | no | - | Vault namespace for multi-tenant setups |
 | `headers` | dict | no | `{}` | Additional HTTP headers for the connection. |
 
-## Event Paths
+## Event paths
 
 **IMPORTANT**: Only officially supported event types can be used with this plugin. For the complete and current list of supported event types, see the [HashiCorp Vault Event Notifications documentation](https://developer.hashicorp.com/vault/docs/concepts/events).
 
 The plugin supports the following categories of events:
 
-### KV v2 Events
+### KV v2 events
 - `kv-v2/*` - All KV v2 events
 - `kv-v2/data-*` - All KV v2 data operations
 
-### KV v1 Events
+### KV v1 events
 - `kv-v1/*` - All KV v1 events
 
-### Database Events
+### Database events
 - `database/*` - All database events
 
-### Performance Note
+### Performance note
 For optimal performance, use single patterns with wildcards (e.g., `kv-v2/*`, `database/*`, `*`) rather than multiple specific patterns. Each pattern creates a separate WebSocket connection.
 
 **For detailed event types and metadata**: See the [official event types table](https://developer.hashicorp.com/vault/docs/concepts/events#event-types) in the HashiCorp documentation.
 
-## WebSocket Connection Behavior
+## WebSocket connection behavior
 
 **Critical Understanding**: Vault's WebSocket API has an important limitation:
 
@@ -66,7 +66,7 @@ For optimal performance, use single patterns with wildcards (e.g., `kv-v2/*`, `d
 - **Resource implications**: Each connection consumes server resources and client connections.
 - **Best practice**: Use broader patterns with wildcards when possible (e.g., `*` for all events, `kv-v2/*` for all KV v2 events).
 
-## Environment Variables
+## Environment variables
 
 When using with `ansible-rulebook --env-vars`, the following environment variables are supported:
 
@@ -75,7 +75,7 @@ When using with `ansible-rulebook --env-vars`, the following environment variabl
 
 ## Examples
 
-### Basic Usage
+### Basic usage
 
 ```yaml
 ---
@@ -96,7 +96,7 @@ When using with `ansible-rulebook --env-vars`, the following environment variabl
           msg: "Secret written to {{ event.data.path }}"
 ```
 
-### Environment Variable Configuration
+### Environment variable configuration
 
 ```yaml
 ---
@@ -118,7 +118,7 @@ When using with `ansible-rulebook --env-vars`, the following environment variabl
           var: event
 ```
 
-### Production Configuration
+### Production configuration
 
 ```yaml
 ---
@@ -154,7 +154,7 @@ When using with `ansible-rulebook --env-vars`, the following environment variabl
             timestamp: "{{ ansible_date_time.iso8601 }}"
 ```
 
-### SSL/TLS Configuration
+### SSL/TLS configuration
 
 ```yaml
 ---
@@ -176,7 +176,7 @@ When using with `ansible-rulebook --env-vars`, the following environment variabl
           msg: "Received event from secure Vault: {{ event.event_type }}"
 ```
 
-### Development with Self-Signed Certificates
+### Development with self-signed certificates
 
 ```yaml
 ---
@@ -198,7 +198,7 @@ When using with `ansible-rulebook --env-vars`, the following environment variabl
           var: event
 ```
 
-## Event Structure
+## Event structure
 
 Events received from Vault follow the [CloudEvents specification](https://cloudevents.io/) and have a structured format. For complete details on the event structure and metadata fields, see the [HashiCorp Vault Event Notifications Format documentation](https://developer.hashicorp.com/vault/docs/concepts/events#event-notifications-format).
 
@@ -223,7 +223,7 @@ Here's a basic example of the event structure you'll receive:
 
 ## Troubleshooting
 
-### Connection Issues
+### Connection issues
 
 1. **Verify Vault server is accessible**:
    ```bash
@@ -243,7 +243,7 @@ Here's a basic example of the event structure you'll receive:
 
    For more details on the API endpoint, see the [Event Streaming API documentation](https://developer.hashicorp.com/vault/api-docs/system/events).
 
-### SSL Certificate Issues
+### SSL certificate issues
 
 For self-signed certificates or development environments:
 
@@ -251,7 +251,7 @@ For self-signed certificates or development environments:
 verify_ssl: false
 ```
 
-### Authentication Errors
+### Authentication errors
 
 Ensure your Vault token has the necessary permissions:
 
@@ -260,13 +260,13 @@ Ensure your Vault token has the necessary permissions:
 vault token capabilities sys/events/subscribe/kv-v2/data-*
 ```
 
-### Network Connectivity
+### Network connectivity
 
 Check if WebSocket connections are blocked by firewalls or proxies. The plugin uses:
 - HTTP/HTTPS protocols for initial connection
 - WebSocket upgrade for streaming
 
-### Debug Logging
+### Debug logging
 
 Enable debug logging in your rulebook to see detailed connection information:
 
@@ -288,7 +288,7 @@ rules:
 - The plugin is designed for high availability with error handling.
 - Only `kv-v1/*`, `kv-v2/*`, and `database/*` event types are officially supported by Vault Enterprise.
 
-## See Also
+## See also
 
 - [HashiCorp Vault Event Notifications Documentation](https://developer.hashicorp.com/vault/docs/concepts/events) - Official documentation for event types and format
 - [HashiCorp Vault Event Streaming API](https://developer.hashicorp.com/vault/api-docs/system/events) - API documentation for event subscription

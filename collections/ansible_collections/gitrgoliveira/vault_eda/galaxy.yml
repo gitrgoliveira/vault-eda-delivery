@@ -1,6 +1,6 @@
 namespace: gitrgoliveira
 name: vault_eda
-version: 0.0.1
+version: 0.0.2
 description: HashiCorp Vault Enterprise Event-Driven Automation plugin for agentless rotation of Vault secrets, using real-time event monitoring via WebSocket
 readme: README.md
 repository: https://github.com/gitrgoliveira/vault-eda-delivery

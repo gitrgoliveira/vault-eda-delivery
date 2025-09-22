@@ -4,7 +4,7 @@ This collection provides event source plugins for HashiCorp Vault integration wi
 
 ## Requirements
 
-### Vault Enterprise or HCP Vault Dedicated Only
+### Vault Enterprise or HCP Vault Dedicated only
 
 **Important**: This collection requires **HashiCorp Vault Enterprise** or **HCP Vault Dedicated**. Event streaming is **not available** in Vault Community Edition.
 
@@ -35,9 +35,9 @@ The `gitrgoliveira.vault_eda` collection allows for agentless secret rotation an
 - ansible-rulebook >= 1.0.0
 - websockets >= 10.0
 
-### Required Vault ACL Policies
+### Required Vault ACL policies
 
-#### Event Subscription Policy
+#### Event subscription policy
 
 ```hcl
 # Allow subscription to event notifications
@@ -46,7 +46,7 @@ path "sys/events/subscribe/*" {
 }
 ```
 
-#### Secret Access Policy (for rotation workflows)
+#### Secret access policy (for rotation workflows)
 
 ```hcl
 # Allow monitoring and rotation of secrets
@@ -77,7 +77,7 @@ ansible-galaxy collection install gitrgoliveira.vault_eda
 
 ## Plugins
 
-### Event Source Plugins
+### Event source plugins
 
 #### vault_events
 
@@ -98,7 +98,7 @@ Monitor HashiCorp Vault events in real-time via WebSocket connection.
 - `namespace` (string, optional): Vault namespace for multi-tenant setups
 - `headers` (dict, optional): Additional HTTP headers for the connection
 
-**Example Usage:**
+**Example usage:**
 
 ```yaml
 ---
@@ -128,7 +128,7 @@ Monitor HashiCorp Vault events in real-time via WebSocket connection.
           msg: "Database event: {{ event.event_type }} - {{ event.data.path | default('N/A') }}"
 ```
 
-## Environment Variables
+## Environment variables
 
 The plugin supports dynamic configuration through environment variables when used with ansible-rulebook's `--env-vars` flag:
 
@@ -139,7 +139,7 @@ export VAULT_TOKEN="your-vault-token"
 ansible-rulebook --env-vars VAULT_ADDR,VAULT_TOKEN -i inventory.yml --rulebook vault-monitoring.yml
 ```
 
-## Event Types
+## Event types
 
 The plugin supports officially supported Vault Enterprise event types. For the complete and current list of supported event types, see the [HashiCorp Vault Event Notifications documentation](https://developer.hashicorp.com/vault/docs/concepts/events#event-types).
 
@@ -152,7 +152,7 @@ The plugin supports officially supported Vault Enterprise event types. For the c
 
 ## Troubleshooting
 
-### Connection Issues
+### Connection issues
 
 1. **Verify Vault Enterprise is running and accessible**:
    ```bash
@@ -181,7 +181,7 @@ The plugin supports officially supported Vault Enterprise event types. For the c
         $VAULT_ADDR/v1/sys/events/subscribe/kv-v2/data-test
    ```
 
-### Authentication Errors
+### Authentication errors
 
 Ensure your Vault token has the necessary permissions:
 
@@ -193,7 +193,7 @@ vault token capabilities sys/events/subscribe/kv-v2/data-*
 vault token capabilities secret/data/*
 ```
 
-### SSL/TLS Issues
+### SSL/TLS issues
 
 For development environments with self-signed certificates:
 
@@ -231,7 +231,7 @@ Enable debug logging in your rulebook:
 
 Mozilla Public License 2.0 (MPL-2.0)
 
-## Author Information
+## Author information
 
 Created by Ricardo Oliveira for HashiCorp Vault Event-Driven Automation integration.
 

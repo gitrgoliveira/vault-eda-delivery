@@ -1,6 +1,6 @@
-# Vault Event-Driven Automation Delivery
+# Vault Event-Driven secret automation with Ansible EDA
 
-This repository provides tools for agentless rotation of HashiCorp Vault secrets using Ansible Event-Driven Automation (EDA). It includes a custom WebSocket plugin that connects to Vault's event streaming endpoint and processes events in real-time for automated secret rotation workflows.
+This repository provides tools for agentless delivery/rotation of HashiCorp Vault secrets using Ansible Event-Driven Automation (EDA). It includes a custom WebSocket plugin that connects to Vault's event streaming endpoint and processes events in real-time for automated secret rotation workflows.
 
 ## Features
 
@@ -20,11 +20,11 @@ Before you begin, ensure you have the following components installed and configu
 3. **Java**: `ansible-rulebook` requires a Java Runtime Environment (JRE) or Java Development Kit (JDK).
 4. **Vault ACL Policy**: You must have a Vault token with a policy granting permissions to subscribe to events and manage secrets.
 
-## Quick Start
+## Quick start
 
 This section guides you through the fastest way to get the project running. The `make` commands automate the setup and execution.
 
-1. **Set Environment Variables**:
+1. **Set environment variables**:
    Export the address of your Vault server and an authentication token.
 
    ```bash
@@ -32,7 +32,7 @@ This section guides you through the fastest way to get the project running. The 
    export VAULT_TOKEN=myroot
    ```
 
-2. **Set Up and Start the Environment**:
+2. **Set up and start the environment**:
    This command initializes the Python environment, installs dependencies, and starts a Vault Enterprise server in development mode.
 
    ```bash
@@ -40,21 +40,21 @@ This section guides you through the fastest way to get the project running. The 
    make start-vault
    ```
 
-3. **Run the Rulebook in the Background**:
+3. **Run the rulebook in the background**:
    This starts the `ansible-rulebook` process to listen for Vault events. The process ID is stored in `rulebook.pid`.
 
    ```bash
    make run-rulebook-bg
    ```
 
-4. **Generate Test Events**:
+4. **Generate test events**:
    Run the included script to create, update, and delete secrets in Vault, which generates events for the rulebook to process.
 
    ```bash
    make test-events
    ```
 
-5. **Monitor the Logs**:
+5. **Monitor the logs**:
    You can view the live output and captured events in the log file.
 
    ```bash
@@ -65,7 +65,7 @@ This section guides you through the fastest way to get the project running. The 
 
 To customize the behavior of the automation, you can adjust the following settings.
 
-### Environment Variables
+### Environment variables
 
 The Ansible rulebook uses environment variables to connect to Vault. You can configure them by using the `--env-vars` parameter or exporting them in your shell.
 
@@ -73,11 +73,11 @@ The Ansible rulebook uses environment variables to connect to Vault. You can con
 - `VAULT_TOKEN`: A Vault authentication token with the required permissions (default: `myroot`).
 
 
-### Vault ACL Policies
+### Vault ACL policies
 
 Your Vault token needs policies that allow it to subscribe to events and manage secrets. The following examples show the required permissions.
 
-#### Event Subscription Policy
+#### Event subscription policy
 
 This policy is mandatory for the plugin to connect to the event stream.
 
@@ -88,7 +88,7 @@ path "sys/events/subscribe/*" {
 }
 ```
 
-#### Secret Access Policy
+#### Secret access policy
 
 This policy allows the automation to monitor and rotate secrets in specific paths.
 
@@ -106,7 +106,7 @@ path "database/creds/*" {
 }
 ```
 
-#### Complete Example Policy
+#### Complete example policy
 
 The following policy combines all required permissions for the automation.
 
@@ -141,7 +141,7 @@ vault policy write eda-automation eda-policy.hcl
 vault token create -policy=eda-automation -ttl=24h
 ```
 
-### Event Subscription Paths
+### Event subscription paths
 
 You can configure which Vault events to monitor by editing the `event_paths` in `vault-eda-rulebook.yaml`. For a complete and up-to-date list of event types, refer to the [official Vault documentation on Event Notifications](https://developer.hashicorp.com/vault/docs/concepts/events).
 
@@ -161,11 +161,11 @@ event_paths:
   - "database/role-*"       # Database role management
 ```
 
-## Development Setup
+## Development setup
 
 This section provides detailed instructions for setting up the environment manually.
 
-### Vault Enterprise Requirements
+### Vault Enterprise requirements
 
 **Important**: This setup requires **HashiCorp Vault Enterprise** or **HCP Vault Dedicated**. Event streaming is **not available** in Vault Community Edition.
 
@@ -180,11 +180,11 @@ For Vault Enterprise versions 1.13-1.15, event notifications may need to be enab
 vault server -experiment events.alpha1
 ```
 
-### Python Virtual Environment
+### Python virtual environment
 
 The project uses a Python virtual environment to manage dependencies.
 
-1. **Activate the Virtual Environment**:
+1. **Activate the virtual environment**:
    Change to the project directory and source the activation script.
 
    ```bash
@@ -192,7 +192,7 @@ The project uses a Python virtual environment to manage dependencies.
    source .venv/bin/activate
    ```
 
-2. **Verify Installation**:
+2. **Verify installation**:
    Check that the required Ansible tools are installed and available in your path.
 
    ```bash
@@ -201,14 +201,14 @@ The project uses a Python virtual environment to manage dependencies.
    ansible-rulebook --version
    ```
 
-3. **Deactivate the Environment**:
+3. **Deactivate the environment**:
    When you are finished, you can deactivate the virtual environment.
 
    ```bash
    deactivate
    ```
 
-### Java Requirement for Ansible Rulebook
+### Java requirement for Ansible Rulebook
 
 `ansible-rulebook` requires a Java environment to run. If you are on macOS and use Homebrew, you can install it and configure the required environment variables.
 
@@ -218,7 +218,7 @@ The project uses a Python virtual environment to manage dependencies.
    brew install openjdk
    ```
 
-2. **Set Environment Variables**:
+2. **Set environment variables**:
    Add the following exports to your shell profile (e.g., `~/.zshrc` or `~/.bash_profile`) to ensure Java is found.
 
    ```bash
@@ -229,7 +229,7 @@ The project uses a Python virtual environment to manage dependencies.
 
    **Note**: The `DYLD_LIBRARY_PATH` is required for the JNI (Java Native Interface) bridge to work correctly.
 
-## Makefile Targets
+## Makefile targets
 
 The project includes a Makefile to automate common development and operational tasks.
 
@@ -257,7 +257,7 @@ make clean              # Stop all processes and clean up log files
 
 This section describes the components and data flow of the project.
 
-### Component Overview
+### Component overview
 
 The repository is structured as an Ansible Collection to package the custom event source plugin.
 
@@ -283,7 +283,7 @@ vault-eda-delivery/
 - **scripts/generate-vault-events.sh**: Event generation script for testing.
 - **Makefile**: Automation for development workflow.
 
-### Event Flow
+### Event flow
 
 The event-driven process follows these steps:
 
@@ -297,9 +297,9 @@ The event-driven process follows these steps:
 
 If you encounter issues, refer to the following common problems and solutions.
 
-### Common Issues
+### Common issues
 
-1. **Event Streaming Not Available**: Verify you are using Vault Enterprise or HCP Vault Dedicated, as the Community Edition does not support event streaming.
+1. **Event streaming not available**: Verify you are using Vault Enterprise or HCP Vault Dedicated, as the Community Edition does not support event streaming.
 
    ```bash
    # Check Vault version and edition
@@ -309,7 +309,7 @@ If you encounter issues, refer to the following common problems and solutions.
    vault events subscribe kv-v2/data-test
    ```
 
-2. **ACL Permission Denied**: Ensure your Vault token has a policy with `read` capabilities on `sys/events/subscribe/*` and `subscribe` capabilities on the secret paths you wish to monitor.
+2. **ACL permission denied**: Ensure your Vault token has a policy with `read` capabilities on `sys/events/subscribe/*` and `subscribe` capabilities on the secret paths you wish to monitor.
 
    ```bash
    # Check token capabilities
@@ -319,20 +319,20 @@ If you encounter issues, refer to the following common problems and solutions.
    # Should return: ["read"] for events, ["list", "subscribe"] for secrets
    ```
 
-3. **Java/JNI Error on macOS**: Check that the `DYLD_LIBRARY_PATH` environment variable is set correctly and points to your JDK's server library.
+3. **Java/JNI error on macOS**: Check that the `DYLD_LIBRARY_PATH` environment variable is set correctly and points to your JDK's server library.
 
    ```bash
    export DYLD_LIBRARY_PATH="$JAVA_HOME/lib/server:$DYLD_LIBRARY_PATH"
    ```
 
-4. **WebSocket Connection Failed**: Confirm that the Vault server is running and accessible from where you are running `ansible-rulebook`. Use `make status-vault` to check.
+4. **WebSocket connection failed**: Confirm that the Vault server is running and accessible from where you are running `ansible-rulebook`. Use `make status-vault` to check.
 
    ```bash
    make status-vault
    curl -s http://127.0.0.1:8200/v1/sys/health
    ```
 
-5. **Rulebook Not Starting**: Check the `rulebook.log` for errors and ensure no other process is using the same ports.
+5. **Rulebook not starting**: Check the `rulebook.log` for errors and ensure no other process is using the same ports.
 
    ```bash
    ps aux | grep ansible-rulebook
