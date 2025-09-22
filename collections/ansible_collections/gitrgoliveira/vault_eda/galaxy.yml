@@ -8,7 +8,7 @@ homepage: https://github.com/gitrgoliveira/vault-eda-delivery
 documentation: https://github.com/gitrgoliveira/vault-eda-delivery/blob/main/README.md
 issues: https://github.com/gitrgoliveira/vault-eda-delivery/issues
 authors:
-  - Ricardo Oliveira <ricardo@example.com>
+  - Ricardo Oliveira
 license:
   - MPL-2.0
 tags:

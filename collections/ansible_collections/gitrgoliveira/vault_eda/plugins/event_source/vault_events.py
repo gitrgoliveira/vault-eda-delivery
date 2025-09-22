@@ -1,4 +1,3 @@
-
 # This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 # If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
@@ -6,9 +5,9 @@
 
 DOCUMENTATION = """
 ---
-module: vault_events
-short_description: HashiCorp Vault WebSocket event source for agentless secret rotation
-version_added: "1.0.0"
+name: vault_events
+description: HashiCorp Vault WebSocket event source for agentless secret rotation
+version: "0.0.2"
 description:
   - This plugin connects to Vault's WebSocket event streaming endpoint and forwards
     events to ansible-rulebook for processing agentless secret rotation workflows.
@@ -20,7 +19,7 @@ description:
 
 options:
   vault_addr:
-    description:§
+    description:
       - Vault server URL including protocol and port.
       - Can be provided via VAULT_ADDR environment variable when using --env-vars.
     type: str
@@ -37,13 +36,9 @@ options:
   
   event_paths:
     description:
-      - List of event paths to subscribe to.
-      - "IMPORTANT: Vault's WebSocket API supports only one event pattern per connection."
-      - "When multiple paths are provided, separate WebSocket connections will be created for each pattern."
-      - "SUPPORTED EVENT TYPES: Only 'kv-v1/*', 'kv-v2/*', and 'database/*' event types are available."
-      - "For optimal performance, use a single pattern with wildcards (e.g., 'kv-v2/*', 'database/*')."
-      - "Examples: 'kv-v2/data-*' for KV v2 data events, 'database/creds-*' for database credential events."
-      - "Use '*' to subscribe to all event types."
+      - List of event paths to subscribe to (each creates a separate WebSocket connection).
+      - "Supported types: 'kv-v1/*', 'kv-v2/*', 'database/*'"
+      - "Use wildcards for better performance (e.g., 'kv-v2/*', 'database/*', '*')"
     type: list
     elements: str
     default: ["kv-v2/data-*"]
@@ -97,16 +92,12 @@ author:
   - Ricardo Oliveira
 
 notes:
-  - This plugin requires Vault Enterprise or HCP Vault Dedicated.
-  - Event streaming is not available in Vault Community Edition.
-  - The plugin automatically handles WebSocket reconnection with exponential backoff.
-  - "IMPORTANT: Vault's WebSocket API supports only one event pattern per connection."
-  - Multiple event_paths will create separate WebSocket connections for each pattern.
-  - "SUPPORTED EVENT TYPES: Only 'kv-v1/*', 'kv-v2/*', and 'database/*' are available."
-  - For optimal performance, use single patterns like 'kv-v2/*', 'database/*', or '*'.
-  - Environment variables can be used with ansible-rulebook --env-vars flag.
-  - Requires proper ACL policies for both event subscription and secret access.
-  - Event notifications follow the CloudEvents specification format.
+  - Requires Vault Enterprise 1.13+ or HCP Vault Dedicated (not available in Community Edition).
+  - Automatic WebSocket reconnection with exponential backoff.
+  - Each event pattern creates a separate WebSocket connection.
+  - Environment variables supported with ansible-rulebook --env-vars flag.
+  - Requires proper ACL policies for event subscription and secret access.
+  - Event notifications follow CloudEvents specification format.
 
 seealso:
   - name: HashiCorp Vault Event Streaming
@@ -118,8 +109,8 @@ seealso:
 """
 
 EXAMPLES = """
-# Basic usage with local Vault Enterprise - single KV pattern
-- name: Monitor local Vault KV events
+# Basic KV monitoring
+- name: Monitor Vault KV events
   sources:
     - gitrgoliveira.vault_eda.vault_events:
         vault_addr: "http://127.0.0.1:8200"
@@ -127,8 +118,8 @@ EXAMPLES = """
         event_paths:
           - "kv-v2/*"
 
-# Database credential rotation monitoring - single database pattern
-- name: Monitor database credential events
+# Database credentials monitoring
+- name: Monitor database events
   sources:
     - gitrgoliveira.vault_eda.vault_events:
         vault_addr: "{{ ansible_env.VAULT_ADDR }}"
@@ -136,30 +127,18 @@ EXAMPLES = """
         event_paths:
           - "database/*"
 
-# Production setup with SSL and namespace - all supported events
-- name: Monitor production Vault - all supported events
-  sources:
-    - gitrgoliveira.vault_eda.vault_events:
-        vault_addr: "https://vault.company.com:8200"
-        vault_token: "{{ vault_token }}"
-        namespace: "production"
-        event_paths:
-          - "*"
-        verify_ssl: true
-        ping_interval: 30
 
-# Multiple supported event patterns - creates separate connections
-- name: Monitor KV and Database events with separate connections
+# Multiple patterns (creates separate connections)
+- name: Monitor multiple event types
   sources:
     - gitrgoliveira.vault_eda.vault_events:
         vault_addr: "{{ ansible_env.VAULT_ADDR }}"
         vault_token: "{{ ansible_env.VAULT_TOKEN }}"
         event_paths:
-          - "kv-v2/*"     # All KV v2 events
-          - "database/*"  # All database events
-        # Note: Two separate WebSocket connections will be created
+          - "kv-v2/*"
+          - "database/*"
 
-# Development setup with self-signed certs - specific KV events
+# Development with self-signed certs
 - name: Development monitoring
   sources:
     - gitrgoliveira.vault_eda.vault_events:
@@ -167,25 +146,7 @@ EXAMPLES = """
         vault_token: "dev-token"
         verify_ssl: false
         event_paths:
-          - "kv-v2/data-*"
-
-# Legacy KV v1 events monitoring
-- name: Monitor KV v1 events
-  sources:
-    - gitrgoliveira.vault_eda.vault_events:
-        vault_addr: "https://vault.company.com:8200"
-        vault_token: "{{ vault_token }}"
-        event_paths:
-          - "kv-v1/*"
-
-# Specific database credential events only
-- name: Monitor database credential creation
-  sources:
-    - gitrgoliveira.vault_eda.vault_events:
-        vault_addr: "{{ ansible_env.VAULT_ADDR }}"
-        vault_token: "{{ ansible_env.VAULT_TOKEN }}"
-        event_paths:
-          - "database/creds-*"
+          - "kv-v2/*"
 """
 
 """
@@ -202,9 +163,10 @@ Dependencies: websockets, asyncio
 
 import asyncio
 import json
-import ssl
 import logging
-from typing import Any, Dict, List, Optional
+import ssl
+from typing import Any, Dict, List
+
 from websockets import connect
 
 # Configure logging for the plugin
