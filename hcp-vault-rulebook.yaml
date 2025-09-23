@@ -1,0 +1,57 @@
+# hcp-vault-test.yaml
+- name: HCP Vault Event Monitoring
+  hosts: localhost
+  sources:
+    - gitrgoliveira.vault_eda.vault_events:
+        vault_addr: "{{ VAULT_ADDR }}"
+        vault_token: "{{ VAULT_TOKEN }}"
+        namespace: "{{ VAULT_NAMESPACE | default('admin') }}"
+        verify_ssl: true
+        ping_interval: 30
+        event_paths:
+          - "kv-v2/*"
+            
+  rules:
+    # Rule for KV v2 write operations
+    - name: on hcp kv write
+      condition: event.data.event_type == "kv-v2/data-write"
+      action:
+        debug:
+          msg: >
+            🎉 HCP KV Write Event -
+            Path: {{ event.data.event.metadata.path }},
+            Data Path: {{ event.data.event.metadata.data_path }},
+            Operation: {{ event.data.event.metadata.operation }},
+            Version: {{ event.data.event.metadata.current_version }}
+
+    # Rule for KV v2 patch operations
+    - name: on hcp kv patch
+      condition: event.data.event_type == "kv-v2/data-patch"
+      action:
+        debug:
+          msg: >
+            ✏️ HCP KV Patch Event -
+            Path: {{ event.data.event.metadata.path }},
+            Data Path: {{ event.data.event.metadata.data_path }},
+            Operation: {{ event.data.event.metadata.operation }}
+
+    # Rule for KV v2 delete operations
+    - name: on hcp kv delete
+      condition: event.data.event_type == "kv-v2/data-delete"
+      action:
+        debug:
+          msg: >
+            🗑️ HCP KV Delete Event -
+            Path: {{ event.data.event.metadata.path }},
+            Operation: {{ event.data.event.metadata.operation }}
+
+    # Catch-all rule for any HCP Vault event
+    - name: on any hcp vault event
+      condition: event.data is defined
+      action:
+        debug:
+          msg: >
+            🔔 HCP Vault Event -
+            Type: {{ event.data.event_type }},
+            Namespace: admin,
+            Time: {{ event.time | default('N/A') }}
