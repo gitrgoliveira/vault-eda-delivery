@@ -1,5 +1,6 @@
 ansible-rulebook<1.2.0
 ansible
+ansible-lint
 websockets
 aiohttp>=3.12.14
 cryptography

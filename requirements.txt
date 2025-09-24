@@ -14,8 +14,15 @@ aiosignal==1.4.0
     # via aiohttp
 ansible==12.0.0
     # via -r requirements.in
+ansible-compat==25.8.1
+    # via ansible-lint
 ansible-core==2.19.2
-    # via ansible
+    # via
+    #   ansible
+    #   ansible-compat
+    #   ansible-lint
+ansible-lint==25.9.0
+    # via -r requirements.in
 ansible-rulebook==1.1.1
     # via -r requirements.in
 ansible-runner==2.4.1
@@ -25,12 +32,23 @@ attrs==25.3.0
     #   aiohttp
     #   jsonschema
     #   referencing
+black==25.9.0
+    # via ansible-lint
+bracex==2.6
+    # via wcmatch
 cffi==2.0.0
-    # via cryptography
+    # via
+    #   ansible-lint
+    #   cryptography
+click==8.3.0
+    # via black
 cryptography==46.0.1
     # via
     #   -r requirements.in
     #   ansible-core
+    #   ansible-lint
+distro==1.9.0
+    # via ansible-lint
 dpath==2.2.0
     # via
     #   -r requirements.in
@@ -39,12 +57,16 @@ drools-jpy==0.3.9
     # via
     #   -r requirements.in
     #   ansible-rulebook
+filelock==3.19.1
+    # via ansible-lint
 frozenlist==1.7.0
     # via
     #   aiohttp
     #   aiosignal
 idna==3.10
     # via yarl
+importlib-metadata==8.7.0
+    # via ansible-lint
 janus==2.0.0
     # via ansible-rulebook
 jinja2==3.1.6
@@ -57,6 +79,8 @@ jpy==1.1.0
 jsonschema==4.25.1
     # via
     #   -r requirements.in
+    #   ansible-compat
+    #   ansible-lint
     #   ansible-rulebook
 jsonschema-specifications==2025.9.1
     # via jsonschema
@@ -70,14 +94,26 @@ multidict==6.6.4
     # via
     #   aiohttp
     #   yarl
+mypy-extensions==1.1.0
+    # via black
 packaging==25.0
     # via
+    #   ansible-compat
     #   ansible-core
+    #   ansible-lint
     #   ansible-runner
+    #   black
+pathspec==0.12.1
+    # via
+    #   ansible-lint
+    #   black
+    #   yamllint
 pexpect==4.9.0
     # via
     #   -r requirements.in
     #   ansible-runner
+platformdirs==4.4.0
+    # via black
 propcache==0.3.2
     # via
     #   aiohttp
@@ -98,14 +134,20 @@ python-daemon==3.1.2
     # via
     #   -r requirements.in
     #   ansible-runner
+pytokens==0.1.10
+    # via black
 pyyaml==6.0.2
     # via
     #   -r requirements.in
+    #   ansible-compat
     #   ansible-core
+    #   ansible-lint
     #   ansible-rulebook
     #   ansible-runner
+    #   yamllint
 referencing==0.36.2
     # via
+    #   ansible-lint
     #   jsonschema
     #   jsonschema-specifications
 resolvelib==1.2.0
@@ -114,15 +156,31 @@ rpds-py==0.27.1
     # via
     #   jsonschema
     #   referencing
+ruamel-yaml==0.18.15
+    # via ansible-lint
+ruamel-yaml-clib==0.2.14
+    # via
+    #   ansible-lint
+    #   ruamel-yaml
+subprocess-tee==0.4.2
+    # via
+    #   ansible-compat
+    #   ansible-lint
 watchdog==6.0.0
     # via
     #   -r requirements.in
     #   ansible-rulebook
+wcmatch==10.1
+    # via ansible-lint
 websockets==15.0.1
     # via
     #   -r requirements.in
     #   ansible-rulebook
 xxhash==3.5.0
     # via ansible-rulebook
+yamllint==1.37.1
+    # via ansible-lint
 yarl==1.20.1
     # via aiohttp
+zipp==3.23.0
+    # via importlib-metadata

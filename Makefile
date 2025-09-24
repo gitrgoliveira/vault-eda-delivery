@@ -1,9 +1,10 @@
-.PHONY: help install-vault start-vault stop-vault status-vault run-rulebook run-rulebook-bg stop-rulebook test-events clean setup-env build-collection publish-collection release-collection
+.PHONY: help install-vault start-vault stop-vault status-vault run-rulebook run-rulebook-bg stop-rulebook test-events clean setup-env compile-deps build-collection publish-collection release-collection
 
 # Default target
 help:
 	@echo "Available targets:"
 	@echo "  setup-env        - Set up environment and install dependencies"
+	@echo "  compile-deps     - Compile requirements.in to requirements.txt"
 	@echo "  start-vault      - Start Vault in dev mode"
 	@echo "  stop-vault       - Stop Vault server"
 	@echo "  status-vault     - Check Vault server status"
@@ -22,7 +23,7 @@ help:
 	@echo ""
 	@echo "Quick start:"
 	@echo "  export VAULT_ADDR=http://127.0.0.1:8200 VAULT_TOKEN=myroot"
-	@echo "  make setup-env && make start-vault && make run-rulebook-bg && make test-events"
+	@echo "  make compile-deps && make setup-env && make start-vault && make run-rulebook-bg && make test-events"
 
 # Set up Python environment and dependencies
 setup-env:
@@ -30,6 +31,18 @@ setup-env:
 	python3 -m venv .venv
 	source .venv/bin/activate && pip install -r requirements.txt
 	@echo "Environment setup complete!"
+
+# Compile requirements.in to requirements.txt using pip-compile
+compile-deps:
+	@echo "Compiling requirements.in to requirements.txt..."
+	@if [ ! -d ".venv" ]; then \
+		echo "Virtual environment not found. Creating one..."; \
+		python3 -m venv .venv; \
+	fi
+	@source .venv/bin/activate && \
+	pip install --upgrade pip pip-tools && \
+	pip-compile --output-file=requirements.txt requirements.in
+	@echo "Dependencies compiled successfully!"
 
 # Start Vault in dev mode
 start-vault:
@@ -71,17 +84,6 @@ status-vault:
 	else \
 		echo "Vault is not running"; \
 	fi
-
-# Run the rulebook
-run-rulebook:
-	@echo "Running Vault EDA rulebook..."
-	@export PATH="/opt/homebrew/opt/openjdk/bin:$$PATH" && \
-	export JAVA_HOME="/opt/homebrew/opt/openjdk/libexec/openjdk.jdk/Contents/Home" && \
-	export DYLD_LIBRARY_PATH="$$JAVA_HOME/lib/server:$$DYLD_LIBRARY_PATH" && \
-	export VAULT_ADDR=$${VAULT_ADDR:-http://127.0.0.1:8200} && \
-	export VAULT_TOKEN=$${VAULT_TOKEN:-myroot} && \
-	source .venv/bin/activate && \
-	ansible-rulebook -i inventory.yml -r vault-eda-rulebook.yaml --env-vars VAULT_ADDR,VAULT_TOKEN --verbose
 
 # Run the rulebook in background
 run-rulebook-bg:
