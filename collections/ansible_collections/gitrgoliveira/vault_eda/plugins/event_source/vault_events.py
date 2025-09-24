@@ -13,7 +13,7 @@ DOCUMENTATION = """
 ---
 name: vault_events
 description: HashiCorp Vault WebSocket event source for agentless secret rotation
-version: "0.0.2"
+version: "0.1.0"
 description:
   - This plugin connects to Vault's WebSocket event streaming endpoint and forwards
     events to ansible-rulebook for processing agentless secret rotation workflows.
@@ -86,6 +86,19 @@ options:
       - Additional HTTP headers to include in the WebSocket connection.
     type: dict
     default: {}
+  
+  filter_expression:
+    description:
+      - Boolean expression to filter events server-side using go-bexpr syntax. https://developer.hashicorp.com/vault/docs/commands/events#event_type
+      - Filters are applied at the Vault server before events are sent to the client.
+      - "Primary filtering field: 'event_type' (most reliable for server-side filtering)"
+      - "Available event_type values: 'kv-v2/data-write', 'kv-v2/data-delete', 'kv-v2/data-patch', 'kv-v2/metadata-write', 'database/creds-create', etc."
+      - "Equality: 'event_type == \"kv-v2/data-write\"'"
+      - "Contains matching: 'event_type contains \"write\"'"
+      - "Complex expressions: 'event_type == \"kv-v2/data-write\" or event_type == \"kv-v2/data-delete\"'"
+    type: str
+    required: false
+    example: 'event_type == "kv-v2/data-write"'
 
 requirements:
   - python >= 3.7
@@ -128,8 +141,8 @@ EXAMPLES = """
 - name: Monitor database events
   sources:
     - gitrgoliveira.vault_eda.vault_events:
-        vault_addr: "{{ ansible_env.VAULT_ADDR }}"
-        vault_token: "{{ ansible_env.VAULT_TOKEN }}"
+        vault_addr: "{{ VAULT_ADDR | default('http://127.0.0.1:8200') }}"
+        vault_token: "{{ VAULT_TOKEN }}"
         event_paths:
           - "database/*"
 
@@ -138,8 +151,8 @@ EXAMPLES = """
 - name: Monitor multiple event types
   sources:
     - gitrgoliveira.vault_eda.vault_events:
-        vault_addr: "{{ ansible_env.VAULT_ADDR }}"
-        vault_token: "{{ ansible_env.VAULT_TOKEN }}"
+        vault_addr: "{{ VAULT_ADDR | default('http://127.0.0.1:8200') }}"
+        vault_token: "{{ VAULT_TOKEN }}"
         event_paths:
           - "kv-v2/*"
           - "database/*"
@@ -153,6 +166,37 @@ EXAMPLES = """
         verify_ssl: false
         event_paths:
           - "kv-v2/*"
+
+# Filter specific event types
+- name: Monitor write operations only
+  sources:
+    - gitrgoliveira.vault_eda.vault_events:
+        vault_addr: "{{ VAULT_ADDR | default('http://127.0.0.1:8200') }}"
+        vault_token: "{{ VAULT_TOKEN }}"
+        event_paths:
+          - "kv-v2/*"
+        filter_expression: 'event_type == "kv-v2/data-write"'
+
+# Filter using contains operator
+- name: Monitor all write operations
+  sources:
+    - gitrgoliveira.vault_eda.vault_events:
+        vault_addr: "{{ VAULT_ADDR | default('http://127.0.0.1:8200') }}"
+        vault_token: "{{ VAULT_TOKEN }}"
+        event_paths:
+          - "kv-v2/*"
+          - "database/*"
+        filter_expression: 'event_type contains "write"'
+
+# Complex OR expressions
+- name: Monitor write and delete operations
+  sources:
+    - gitrgoliveira.vault_eda.vault_events:
+        vault_addr: "{{ VAULT_ADDR | default('http://127.0.0.1:8200') }}"
+        vault_token: "{{ VAULT_TOKEN }}"
+        event_paths:
+          - "kv-v2/*"
+        filter_expression: 'event_type == "kv-v2/data-write" or event_type == "kv-v2/data-delete"'
 """
 
 """
@@ -171,7 +215,8 @@ import asyncio
 import json
 import logging
 import ssl
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
+from urllib.parse import quote
 
 from websockets import connect
 from websockets.exceptions import ConnectionClosed, WebSocketException
@@ -189,6 +234,7 @@ async def _stream_single_pattern(  # pylint: disable=too-many-arguments,too-many
     verify_ssl: bool,
     backoff_initial: float,
     backoff_max: float,
+    filter_expression: Optional[str] = None,
 ):
     """
     Establish and maintain WebSocket connection to Vault events endpoint for a single pattern.
@@ -202,9 +248,10 @@ async def _stream_single_pattern(  # pylint: disable=too-many-arguments,too-many
         verify_ssl: Whether to verify SSL certificates
         backoff_initial: Initial reconnection delay in seconds
         backoff_max: Maximum reconnection delay in seconds
+        filter_expression: Optional go-bexpr boolean expression to filter events
     """
     # Build the WebSocket URL for this specific pattern
-    url = _build_event_url(vault_addr, event_pattern)
+    url = _build_event_url(vault_addr, event_pattern, filter_expression)
 
     # Configure SSL context for secure connections
     ssl_ctx = None
@@ -296,6 +343,7 @@ async def _stream_multiple_patterns(  # pylint: disable=too-many-arguments,too-m
     verify_ssl: bool,
     backoff_initial: float,
     backoff_max: float,
+    filter_expression: Optional[str] = None,
 ):
     """
     Manage multiple WebSocket connections for different event patterns.
@@ -309,6 +357,7 @@ async def _stream_multiple_patterns(  # pylint: disable=too-many-arguments,too-m
         verify_ssl: Whether to verify SSL certificates
         backoff_initial: Initial reconnection delay in seconds
         backoff_max: Maximum reconnection delay in seconds
+        filter_expression: Optional go-bexpr boolean expression to filter events
     """
     # Create tasks for each event pattern
     tasks = []
@@ -324,6 +373,7 @@ async def _stream_multiple_patterns(  # pylint: disable=too-many-arguments,too-m
                 verify_ssl,
                 backoff_initial,
                 backoff_max,
+                filter_expression,
             )
         )
         tasks.append(task)
@@ -341,13 +391,14 @@ async def _stream_multiple_patterns(  # pylint: disable=too-many-arguments,too-m
         raise
 
 
-def _build_event_url(vault_addr: str, event_pattern: str) -> str:
+def _build_event_url(vault_addr: str, event_pattern: str, filter_expression: Optional[str] = None) -> str:
     """
     Construct the WebSocket URL for Vault event subscription.
 
     Args:
         vault_addr: Base Vault server URL (http/https)
         event_pattern: Single event pattern to subscribe to
+        filter_expression: Optional go-bexpr boolean expression to filter events
 
     Returns:
         Complete WebSocket URL for event subscription
@@ -358,8 +409,15 @@ def _build_event_url(vault_addr: str, event_pattern: str) -> str:
     else:
         ws_url = vault_addr.replace("http://", "ws://")
 
-    # Build complete event subscription URL
+    # Build base event subscription URL
     event_url = f"{ws_url}/v1/sys/events/subscribe/{event_pattern}?json=true"
+    
+    # Add filter expression if provided
+    if filter_expression:
+        encoded_filter = quote(filter_expression)
+        event_url += f"&filter={encoded_filter}"
+        log.info("Applied filter expression: %s", filter_expression)
+    
     log.info("Built event URL: %s", event_url)
 
     return event_url
@@ -386,6 +444,7 @@ async def main(queue: Any, args: Dict[str, Any]):
         backoff_max: Maximum reconnection delay (default: 30.0)
         namespace: Optional Vault namespace
         headers: Optional additional HTTP headers
+        filter_expression: Optional go-bexpr boolean expression to filter events
 
     Note:
         Each event pattern in event_paths will get its own WebSocket connection.
@@ -439,12 +498,16 @@ async def main(queue: Any, args: Dict[str, Any]):
     ping_interval = int(args.get("ping_interval", 20))
     backoff_initial = float(args.get("backoff_initial", 1.0))
     backoff_max = float(args.get("backoff_max", 30.0))
+    filter_expression = args.get("filter_expression")
 
     log.info(
         "Connection settings - SSL verify: %s, Ping interval: %ds",
         verify_ssl,
         ping_interval,
     )
+    
+    if filter_expression:
+        log.info("Using filter expression: %s", filter_expression)
 
     # Start the WebSocket streams - create separate connections for multiple patterns
     await _stream_multiple_patterns(
@@ -456,4 +519,5 @@ async def main(queue: Any, args: Dict[str, Any]):
         verify_ssl=verify_ssl,
         backoff_initial=backoff_initial,
         backoff_max=backoff_max,
+        filter_expression=filter_expression,
     )

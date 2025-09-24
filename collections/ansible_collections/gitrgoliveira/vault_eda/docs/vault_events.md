@@ -35,6 +35,7 @@ The `vault_events` plugin provides real-time monitoring of HashiCorp Vault event
 | `backoff_max` | float | no | 30.0 | Maximum reconnection delay in seconds |
 | `namespace` | string | no | - | Vault namespace for multi-tenant setups |
 | `headers` | dict | no | `{}` | Additional HTTP headers for the connection. |
+| `filter_expression` | string | no | - | Boolean expression to filter events server-side using go-bexpr syntax. Reduces bandwidth and processing overhead by filtering at the Vault server. |
 
 ## Event paths
 
@@ -73,6 +74,93 @@ When using with `ansible-rulebook --env-vars`, the following environment variabl
 - `VAULT_ADDR` - Vault server URL
 - `VAULT_TOKEN` - Vault authentication token
 
+## Server-side event filtering
+
+The `filter_expression` parameter allows you to filter events server-side using go-bexpr boolean expressions. This reduces bandwidth and processing overhead by filtering events at the Vault server before they are sent to the client.
+
+More information can be found in [the official Vault documentation](https://developer.hashicorp.com/vault/docs/commands/events#event_type).
+
+### Primary filtering field
+
+Based on testing, the most reliable field for server-side filtering is:
+
+- `event_type` - The event type (e.g., "kv-v2/data-write", "kv-v2/data-delete", "database/creds-create")
+
+### Common event types for filtering
+
+- `kv-v2/data-write` - KV v2 secret creation and updates
+- `kv-v2/data-delete` - KV v2 secret deletion
+- `kv-v2/data-patch` - KV v2 secret partial updates
+- `kv-v2/metadata-write` - KV v2 metadata updates
+- `database/creds-create` - Database credential creation
+- `database/config-write` - Database configuration changes
+
+### Filter expression examples
+
+#### Basic equality filtering
+```yaml
+# Monitor only write operations
+filter_expression: 'event_type == "kv-v2/data-write"'
+
+# Monitor only delete operations
+filter_expression: 'event_type == "kv-v2/data-delete"'
+```
+
+#### Contains filtering
+```yaml
+# Monitor all operations containing "write"
+filter_expression: 'event_type contains "write"'
+
+# Monitor all KV v2 operations
+filter_expression: 'event_type contains "kv-v2"'
+```
+
+#### Complex OR expressions
+```yaml
+# Monitor write and delete operations
+filter_expression: 'event_type == "kv-v2/data-write" or event_type == "kv-v2/data-delete"'
+
+# Monitor write and patch operations
+filter_expression: 'event_type == "kv-v2/data-write" or event_type == "kv-v2/data-patch"'
+```
+
+### Important notes
+
+- Server-side filtering uses the `event_type` field, which is different from the nested paths in the event data structure
+- Complex nested field filtering may not work reliably for server-side filtering
+- Event data access in rulebook conditions uses nested paths like `event.data.event.metadata.data_path`
+- Filters are URL-encoded and applied at the Vault server level
+### Important notes
+
+- Server-side filtering uses the `event_type` field, which is different from the nested paths in the event data structure
+- Complex nested field filtering may not work reliably for server-side filtering
+- Event data access in rulebook conditions uses nested paths like `event.data.event.metadata.data_path`
+- Filters are URL-encoded and applied at the Vault server level
+
+## Event data structure
+
+When events are received in your rulebook, they follow this structure:
+```
+
+#### Boolean logic combinations
+```yaml
+filter_expression: 'data.event.metadata.data_path == "secret/data/prod" and data.event.metadata.operation == "data-write"'
+filter_expression: 'data.event.metadata.operation == "data-write" or data.event.metadata.operation == "data-patch"'
+filter_expression: 'data.event.metadata.data_path == "secret/data/prod/database" and data.event.metadata.operation != "data-read"'
+```
+
+#### Pattern matching with regex
+```yaml
+filter_expression: 'data.event.metadata.data_path matches "^secret/data/prod/.*"'
+filter_expression: 'event_type contains "kv-v2"'
+filter_expression: 'data.plugin_info.mount_path matches "^secret/"'
+```
+
+#### Complex combinations
+```yaml
+filter_expression: '(data.event.metadata.data_path matches "^secret/data/prod/.*" and data.event.metadata.operation != "data-read") or data.plugin_info.mount_path == "database/"'
+```
+
 ## Examples
 
 ### Basic usage
@@ -93,7 +181,7 @@ When using with `ansible-rulebook --env-vars`, the following environment variabl
       condition: event.event_type == "kv-v2/data-write"
       action:
         debug:
-          msg: "Secret written to {{ event.data.path }}"
+          msg: "Secret written to {{ event.data.event.metadata.data_path }}"
 ```
 
 ### Environment variable configuration

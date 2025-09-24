@@ -20,6 +20,7 @@ The `gitrgoliveira.vault_eda` collection allows for agentless secret rotation an
 
 - **Agentless Secret Rotation**: Automated secret rotation triggered by Vault events.
 - **Real-time Event Streaming**: WebSocket connection to Vault's event subscription endpoint.
+- **Server-side Event Filtering**: Filter events at the Vault server using go-bexpr boolean expressions.
 - **Enterprise Ready**: Built for Vault Enterprise and HCP Vault Dedicated.
 - **Flexible Configuration**: Support for environment variables and dynamic configuration.
 - **Supported Event Types**: Monitor KV v1, KV v2, and database events.

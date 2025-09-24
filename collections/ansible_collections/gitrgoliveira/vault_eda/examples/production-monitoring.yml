@@ -1,10 +1,11 @@
-## This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
-## If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 ---
 # Production Vault Event Monitoring
 #
-# This example demonstrates production-ready monitoring with multiple supported event types,
-# SSL verification, and advanced filtering. 
+# This example demonstrates production-ready monitoring with only supported event types,
+# SSL verification, and practical filtering patterns that can be tested.
+#
+# Note: This focuses on KV v2 events which are the most commonly used and fully testable.
+# Database events require actual database configuration and may not be available in all environments.
 #
 # Usage:
 #   export VAULT_ADDR="https://vault.company.com:8200"
@@ -14,87 +15,94 @@
 - name: Production Vault Event Monitoring
   hosts: localhost
   gather_facts: false
-  
+
   sources:
     - gitrgoliveira.vault_eda.vault_events:
-        vault_addr: "{{ ansible_env.VAULT_ADDR }}"
-        vault_token: "{{ ansible_env.VAULT_TOKEN }}"
-        namespace: "{{ ansible_env.VAULT_NAMESPACE | default('') }}"
+        vault_addr: "{{ VAULT_ADDR }}"
+        vault_token: "{{ VAULT_TOKEN }}"
+        namespace: "{{ VAULT_NAMESPACE | default('') }}"
         event_paths:
-          - "kv-v2/data-*"
-          - "kv-v1/*"
-          - "database/*"
+          - "kv-v2/*"  # Focus on KV v2 events which are reliably testable
         verify_ssl: true
         ping_interval: 30
         backoff_initial: 2.0
         backoff_max: 60.0
         headers:
           X-Monitoring-System: "ansible-eda"
-  
+
   rules:
-    - name: Critical Database Events
+    - name: High-Value Secret Access
       condition: >
-        event.event_type in [
-          "database/config-write",
-          "database/config-delete"
-        ]
+        event.data.event_type == "kv-v2/data-write" and
+        event.data.event.metadata.data_path is defined and
+        (
+          "/prod/" in event.data.event.metadata.data_path or
+          "/database/" in event.data.event.metadata.data_path or
+          "/api-keys/" in event.data.event.metadata.data_path
+        )
       action:
         debug:
-          msg: "🚨 CRITICAL: {{ event.event_type }} - {{ event.data }}"
+          msg: "HIGH-VALUE SECRET ACCESS: {{ event.data.event.metadata.data_path }} (version {{ event.data.event.metadata.current_version }})"
+        # In production, you might log to file for audit trail
+        # lineinfile:
+        #   path: "/var/log/vault-audit.log"
+        #   line: "{{ ansible_date_time.iso8601 }}: High-value secret {{ event.event_type }} at {{ event.data.event.metadata.data_path }}"
+        #   create: true
+
+    - name: Mass Secret Operations
+      condition: event.data.event_type == "kv-v2/data-delete"
+      action:
+        debug:
+          msg: "SECRET DELETED: {{ event.data.event.metadata.path | default('N/A') }} - Review if intentional"
         # In production, you might send to SIEM, Slack, PagerDuty, etc.
         # uri:
         #   url: "https://hooks.slack.com/your-webhook"
         #   method: POST
         #   body_format: json
         #   body:
-        #     text: "Critical Vault event: {{ event.event_type }}"
-    
-    - name: Database Events
-      condition: event.event_type.startswith("database/")
+        #     text: "Critical Vault event: {{ event.data.event_type }}"
+
+    - name: Secret Patches
+      condition: event.data.event_type == "kv-v2/data-patch"
       action:
         debug:
-          msg: "�️ Database: {{ event.event_type }} - {{ event.data.path | default('N/A') }}"
-    
-    - name: High-Value Secret Access
+          msg: "SECRET PATCHED: {{ event.data.event.metadata.data_path }} (version {{ event.data.event.metadata.current_version }})"
+
+    - name: Secret Metadata Changes
+      condition: event.data.event_type == "kv-v2/metadata-write"
+      action:
+        debug:
+          msg: "METADATA UPDATED: {{ event.data.event.metadata.data_path }} - {{ event.data.event.metadata.operation }}"
+
+    - name: Secret Version Management
       condition: >
-        event.event_type == "kv-v2/data-write" and 
-        (
-          event.data.path.find("/prod/") != -1 or
-          event.data.path.find("/database/") != -1 or
-          event.data.path.find("/api-keys/") != -1
-        )
-      action:
-        debug:
-          msg: "⚠️  HIGH-VALUE SECRET ACCESS: {{ event.data.path }} (version {{ event.data.metadata.version }})"
-        # Log to file for audit trail
-        lineinfile:
-          path: "/var/log/vault-audit.log"
-          line: "{{ ansible_date_time.iso8601 }}: High-value secret {{ event.event_type }} at {{ event.data.path }}"
-          create: true
-    
-    - name: Mass Secret Operations  
-      condition: event.event_type == "kv-v2/data-delete"
-      action:
-        debug:
-          msg: "🗑️  SECRET DELETED: {{ event.data.path }} - Review if intentional"
-    
-    - name: Standard KV Operations
-      condition: >
-        event.event_type in ["kv-v2/data-write", "kv-v2/data-patch"] and
-        event.data.path.find("/prod/") == -1 and
-        event.data.path.find("/database/") == -1 and
-        event.data.path.find("/api-keys/") == -1
-      action:
-        debug:
-          msg: "📝 Standard operation: {{ event.event_type }} at {{ event.data.path }}"
-    
-    - name: Unknown Events
-      condition: >
-        event.event_type not in [
-          "kv-v2/data-write", "kv-v2/data-delete", "kv-v2/data-patch",
-          "kv-v1/write", "kv-v1/delete", 
-          "database/config-write", "database/config-delete", "database/creds-create"
+        event.data.event_type in [
+          "kv-v2/data-undelete",
+          "kv-v2/data-destroy",
+          "kv-v2/metadata-delete"
         ]
       action:
         debug:
-          msg: "❓ Unknown event type: {{ event.event_type }} - Data: {{ event.data }}"
+          msg: "VERSION OPERATION: {{ event.data.event_type }} on {{ event.data.event.metadata.path | default('N/A') }}"
+
+    - name: Standard KV Operations
+      condition: >
+        event.data.event_type in ["kv-v2/data-write", "kv-v2/data-patch"] and
+        event.data.event.metadata.data_path is defined and
+        "/prod/" not in event.data.event.metadata.data_path and
+        "/database/" not in event.data.event.metadata.data_path and
+        "/api-keys/" not in event.data.event.metadata.data_path
+      action:
+        debug:
+          msg: "Standard operation: {{ event.data.event_type }} at {{ event.data.event.metadata.data_path }}"
+
+    - name: Unknown Events
+      condition: >
+        event.data.event_type not in [
+          "kv-v2/data-write", "kv-v2/data-delete", "kv-v2/data-patch",
+          "kv-v2/data-undelete", "kv-v2/data-destroy",
+          "kv-v2/metadata-write", "kv-v2/metadata-delete"
+        ]
+      action:
+        debug:
+          msg: "Unknown KV event type: {{ event.data.event_type }} - Data: {{ event.data }}"

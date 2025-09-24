@@ -6,6 +6,7 @@ This repository provides tools for agentless delivery/rotation of HashiCorp Vaul
 
 - **Agentless Secret Rotation**: Automate secret rotation triggered by Vault events without requiring agents.
 - **Real-time Event Streaming**: Connect directly to Vault's `/v1/sys/events/subscribe` endpoint using WebSocket for immediate event processing.
+- **Server-side Event Filtering**: Filter events at the Vault server using go-bexpr boolean expressions to reduce bandwidth and processing overhead.
 - **Dynamic Configuration**: Use environment variables for `VAULT_ADDR` and `VAULT_TOKEN` to easily switch between different Vault environments.
 - **Broad Event Support**: Support events from KV v1, KV v2, and Database secrets engines.
 - **Automated Development Workflow**: Use the provided Makefile to quickly set up, run, and test the entire environment.
@@ -72,6 +73,46 @@ The Ansible rulebook uses environment variables to connect to Vault. You can con
 - `VAULT_ADDR`: The URL of your Vault server (default: `http://127.0.0.1:8200`).
 - `VAULT_TOKEN`: A Vault authentication token with the required permissions (default: `myroot`).
 
+### Server-side event filtering
+
+The plugin supports server-side event filtering using go-bexpr boolean expressions. This feature allows you to filter events at the Vault server before they are sent to the client, reducing bandwidth and processing overhead.
+
+#### Basic filtering examples
+
+Filter events by event type:
+
+```yaml
+# Monitor only write operations
+- name: Monitor KV write events only
+  sources:
+    - gitrgoliveira.vault_eda.vault_events:
+        vault_addr: "{{ VAULT_ADDR | default('http://127.0.0.1:8200') }}"
+        vault_token: "{{ VAULT_TOKEN }}"
+        event_paths:
+          - "kv-v2/*"
+        filter_expression: 'event_type == "kv-v2/data-write"'
+
+# Monitor events containing "write" 
+- name: Monitor all write operations
+  sources:
+    - gitrgoliveira.vault_eda.vault_events:
+        vault_addr: "{{ VAULT_ADDR | default('http://127.0.0.1:8200') }}"
+        vault_token: "{{ VAULT_TOKEN }}"
+        event_paths:
+          - "kv-v2/*"
+          - "database/*"
+        filter_expression: 'event_type contains "write"'
+
+# Complex OR expressions
+- name: Monitor write and delete operations
+  sources:
+    - gitrgoliveira.vault_eda.vault_events:
+        vault_addr: "{{ VAULT_ADDR | default('http://127.0.0.1:8200') }}"
+        vault_token: "{{ VAULT_TOKEN }}"
+        event_paths:
+          - "kv-v2/*"
+        filter_expression: 'event_type == "kv-v2/data-write" or event_type == "kv-v2/data-delete"'
+```
 
 ### Vault ACL policies
 
