@@ -9,8 +9,10 @@
         verify_ssl: true
         ping_interval: 30
         event_paths:
-          - "kv-v2/*"
-            
+          - "kv-v2/data-write"
+          - "kv-v2/data-patch"
+          - "kv-v2/data-delete"
+
   rules:
     # Rule for KV v2 write operations
     - name: on hcp kv write

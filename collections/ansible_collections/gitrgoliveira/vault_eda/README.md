@@ -117,16 +117,16 @@ Monitor HashiCorp Vault events in real-time via WebSocket connection.
   
   rules:
     - name: Handle KV Write Events
-      condition: event.event_type == "kv-v2/data-write"
+      condition: event.data.event_type == "kv-v2/data-write"
       action:
         debug:
-          msg: "Secret written to {{ event.data.path }} by {{ event.data.metadata.created_by }}"
+          msg: "Secret written to {{ event.data.event.data.path }} by {{ event.data.event.data.metadata.created_by | default('system') }}"
     
     - name: Handle Database Events
-      condition: event.event_type.startswith("database/")
+      condition: event.data.event_type.startswith("database/")
       action:
         debug:
-          msg: "Database event: {{ event.event_type }} - {{ event.data.path | default('N/A') }}"
+          msg: "Database event: {{ event.data.event_type }} - {{ event.data.event.data.path | default('N/A') }}"
 ```
 
 ## Environment variables

@@ -320,7 +320,7 @@ vault-eda-delivery/
 ```
 
 - **vault-eda-rulebook.yaml**: Main rulebook configuration with environment variable integration.
-- **collections/ansible_collections/gitrgoliveira/vault/plugins/event_source/vault_events.py**: Custom WebSocket event source plugin.
+- **collections/ansible_collections/gitrgoliveira/vault_eda/plugins/event_source/vault_events.py**: Custom WebSocket event source plugin.
 - **scripts/generate-vault-events.sh**: Event generation script for testing.
 - **Makefile**: Automation for development workflow.
 
@@ -378,6 +378,39 @@ If you encounter issues, refer to the following common problems and solutions.
    ```bash
    ps aux | grep ansible-rulebook
    tail -f rulebook.log
+   ```
+
+### HCP Vault Dedicated specific issues
+
+When using HCP Vault Dedicated, additional considerations apply:
+
+1. **Missing subscribe capability**: HCP Vault requires explicit `subscribe` capability in ACL policies for event reception. 403 errors may indicate missing this capability.
+
+   ```bash
+   # Create policy with required subscribe capability
+   vault policy write hcp-event-policy - << 'EOF'
+   path "*" { 
+     capabilities = ["create", "read", "update", "delete", "list", "subscribe", "sudo", "patch"] 
+     subscribe_event_types = ["*"]
+   }
+   EOF
+   
+   # Create token with subscribe policy
+   vault token create -policy=hcp-event-policy -format=json
+   ```
+
+2. **Namespace configuration**: Always set `VAULT_NAMESPACE=admin` for HCP Vault Dedicated.
+
+   ```bash
+   export VAULT_NAMESPACE=admin
+   ```
+
+3. **Connection timing**: Allow 15-20 seconds after WebSocket connection establishment before generating test events for reliable testing.
+
+   ```bash
+   # Test WebSocket endpoint manually
+   curl -H "X-Vault-Token: $VAULT_TOKEN" -H "X-Vault-Namespace: admin" \
+        "$VAULT_ADDR/v1/sys/events/subscribe/kv-v2/*?json=true" -s -I
    ```
 
 ### Debugging

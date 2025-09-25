@@ -78,7 +78,7 @@ When using with `ansible-rulebook --env-vars`, the following environment variabl
 
 The `filter_expression` parameter allows you to filter events server-side using go-bexpr boolean expressions. This reduces bandwidth and processing overhead by filtering events at the Vault server before they are sent to the client.
 
-More information can be found in [the official Vault documentation](https://developer.hashicorp.com/vault/docs/commands/events#event_type).
+More information can be found in [the official Vault documentation](https://developer.hashicorp.com/vault/docs/commands/events).
 
 ### Primary filtering field
 
@@ -178,10 +178,10 @@ filter_expression: '(data.event.metadata.data_path matches "^secret/data/prod/.*
   
   rules:
     - name: Log KV Events
-      condition: event.event_type == "kv-v2/data-write"
+      condition: event.data.event_type == "kv-v2/data-write"
       action:
         debug:
-          msg: "Secret written to {{ event.data.event.metadata.data_path }}"
+          msg: "Secret written to {{ event.data.event.data.metadata.data_path }}"
 ```
 
 ### Environment variable configuration
@@ -230,7 +230,7 @@ filter_expression: '(data.event.metadata.data_path matches "^secret/data/prod/.*
   
   rules:
     - name: Critical Events Alert
-      condition: event.event_type in ["kv-v2/data-delete", "database/config-write"]
+      condition: event.data.event_type in ["kv-v2/data-delete", "database/config-write"]
       action:
         uri:
           url: "https://alerts.company.com/webhook"
@@ -238,7 +238,7 @@ filter_expression: '(data.event.metadata.data_path matches "^secret/data/prod/.*
           body_format: json
           body:
             alert: "Critical Vault event detected"
-            event_type: "{{ event.event_type }}"
+            event_type: "{{ event.data.event_type }}"
             timestamp: "{{ ansible_date_time.iso8601 }}"
 ```
 
@@ -261,7 +261,7 @@ filter_expression: '(data.event.metadata.data_path matches "^secret/data/prod/.*
       condition: true
       action:
         debug:
-          msg: "Received event from secure Vault: {{ event.event_type }}"
+          msg: "Received event from secure Vault: {{ event.data.event_type }}"
 ```
 
 ### Development with self-signed certificates
@@ -290,22 +290,159 @@ filter_expression: '(data.event.metadata.data_path matches "^secret/data/prod/.*
 
 Events received from Vault follow the [CloudEvents specification](https://cloudevents.io/) and have a structured format. For complete details on the event structure and metadata fields, see the [HashiCorp Vault Event Notifications Format documentation](https://developer.hashicorp.com/vault/docs/concepts/events#event-notifications-format).
 
-Here's a basic example of the event structure you'll receive:
+### Complete event structure
+
+Events received by the plugin have the following structure when accessed in rulebook conditions:
 
 ```json
 {
-  "event_type": "kv-v2/data-write",
-  "timestamp": "2025-09-15T12:34:56.789Z",
   "data": {
-    "path": "secret/data/myapp/config",
-    "metadata": {
-      "created_time": "2025-09-15T12:34:56.789Z",
-      "version": 1,
-      "destroyed": false
+    "event_type": "kv-v2/data-write",
+    "event": {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "source": "https://vault.example.com:8200",
+      "specversion": "1.0",
+      "type": "kv-v2/data-write",
+      "datacontentype": "application/json",
+      "time": "2025-09-15T12:34:56.789Z",
+      "data": {
+        "path": "secret/data/myapp/config",
+        "metadata": {
+          "created_time": "2025-09-15T12:34:56.789Z",
+          "version": 1,
+          "destroyed": false,
+          "deletion_time": "",
+          "data_path": "secret/data/myapp/config",
+          "operation": "data-write"
+        }
+      }
+    },
+    "plugin_info": {
+      "plugin": "kv",
+      "plugin_version": "v0.16.1",
+      "mount_path": "secret/"
     }
   }
 }
 ```
+
+### Event type examples
+
+#### KV v2 Write Event
+```json
+{
+  "data": {
+    "event_type": "kv-v2/data-write",
+    "event": {
+      "data": {
+        "path": "secret/data/myapp/config",
+        "metadata": {
+          "created_time": "2025-09-15T12:34:56.789Z",
+          "version": 3,
+          "destroyed": false,
+          "data_path": "secret/data/myapp/config",
+          "operation": "data-write"
+        }
+      }
+    },
+    "plugin_info": {
+      "plugin": "kv",
+      "mount_path": "secret/"
+    }
+  }
+}
+```
+
+#### KV v2 Delete Event
+```json
+{
+  "data": {
+    "event_type": "kv-v2/data-delete",
+    "event": {
+      "data": {
+        "path": "secret/data/myapp/config", 
+        "metadata": {
+          "deletion_time": "2025-09-15T12:35:00.123Z",
+          "version": 3,
+          "destroyed": true,
+          "data_path": "secret/data/myapp/config",
+          "operation": "data-delete"
+        }
+      }
+    },
+    "plugin_info": {
+      "plugin": "kv",
+      "mount_path": "secret/"
+    }
+  }
+}
+```
+
+#### Database Credentials Event
+```json
+{
+  "data": {
+    "event_type": "database/creds-create",
+    "event": {
+      "data": {
+        "path": "database/creds/readonly",
+        "metadata": {
+          "created_time": "2025-09-15T12:36:00.456Z",
+          "operation": "creds-create",
+          "role_name": "readonly"
+        }
+      }
+    },
+    "plugin_info": {
+      "plugin": "database",
+      "mount_path": "database/"
+    }
+  }
+}
+```
+
+### Accessing event data in rules
+
+In your rulebook conditions and actions, access event data using these paths:
+
+```yaml
+rules:
+  - name: Handle KV Write Events
+    condition: event.data.event_type == "kv-v2/data-write"
+    action:
+      debug:
+        msg: |
+          Event Type: {{ event.data.event_type }}
+          Path: {{ event.data.event.data.path }}
+          Data Path: {{ event.data.event.data.metadata.data_path }}
+          Operation: {{ event.data.event.data.metadata.operation }}
+          Version: {{ event.data.event.data.metadata.version }}
+          Plugin: {{ event.data.plugin_info.plugin }}
+          Mount Path: {{ event.data.plugin_info.mount_path }}
+
+  - name: Handle Database Events
+    condition: event.data.event_type.startswith("database/")
+    action:
+      debug:
+        msg: |
+          Database Event: {{ event.data.event_type }}
+          Path: {{ event.data.event.data.path }}
+          Role: {{ event.data.event.data.metadata.role_name | default('N/A') }}
+          Plugin Mount: {{ event.data.plugin_info.mount_path }}
+```
+
+### Common event metadata fields
+
+- **event_type**: The type of event (e.g., "kv-v2/data-write", "database/creds-create")
+- **path**: Full Vault path where the event occurred
+- **data_path**: Data-specific path (for KV v2, includes "/data/")
+- **operation**: Operation performed (write, delete, patch, etc.)
+- **version**: Secret version (KV v2 only)
+- **created_time**: Timestamp when the event was created
+- **deletion_time**: Timestamp when deleted (delete events only)
+- **destroyed**: Boolean indicating if the secret is destroyed
+- **plugin**: Plugin type generating the event
+- **mount_path**: Mount path of the plugin
 
 **For complete event structure details**: See the [official event notifications format](https://developer.hashicorp.com/vault/docs/concepts/events#event-notifications-format) in the HashiCorp documentation.
 
@@ -329,7 +466,7 @@ Here's a basic example of the event structure you'll receive:
         $VAULT_ADDR/v1/sys/events/subscribe/kv-v2/data-test
    ```
 
-   For more details on the API endpoint, see the [Event Streaming API documentation](https://developer.hashicorp.com/vault/api-docs/system/events).
+   For more details on the API endpoint, see the [Event Streaming Command documentation](https://developer.hashicorp.com/vault/docs/commands/events).
 
 ### SSL certificate issues
 
@@ -367,6 +504,39 @@ rules:
         var: event
 ```
 
+### HCP Vault Dedicated specific troubleshooting
+
+When using HCP Vault Dedicated, additional considerations apply:
+
+1. **Subscribe capability requirement**: HCP requires explicit `subscribe` capability in ACL policies. 403 errors typically indicate missing this capability.
+
+   ```bash
+   # Check token policies include subscribe capability
+   vault token lookup -format=json | jq -r '.data.policies[]' | \
+   xargs -I {} vault policy read {}
+   
+   # Should include subscribe capabilities and event types
+   ```
+
+2. **Namespace requirement**: Always use `VAULT_NAMESPACE=admin` for HCP Vault Dedicated:
+
+   ```yaml
+   sources:
+     - gitrgoliveira.vault_eda.vault_events:
+         vault_addr: "https://your-cluster.z1.hashicorp.cloud:8200"
+         vault_token: "{{ vault_token }}"
+         namespace: "admin"  # Required for HCP
+   ```
+
+3. **Connection timing**: Wait 15-20 seconds after establishing WebSocket connection before generating test events for reliable testing.
+
+   ```bash
+   # Direct WebSocket testing with HCP
+   wscat -c "wss://your-cluster.z1.hashicorp.cloud:8200/v1/sys/events/subscribe/kv-v2/*?json=true" \
+         -H "X-Vault-Token: $VAULT_TOKEN" \
+         -H "X-Vault-Namespace: admin"
+   ```
+
 ## Notes
 
 - The plugin automatically handles WebSocket reconnection with exponential backoff.
@@ -379,6 +549,6 @@ rules:
 ## See also
 
 - [HashiCorp Vault Event Notifications Documentation](https://developer.hashicorp.com/vault/docs/concepts/events) - Official documentation for event types and format
-- [HashiCorp Vault Event Streaming API](https://developer.hashicorp.com/vault/api-docs/system/events) - API documentation for event subscription
+- [HashiCorp Vault Event Streaming Command](https://developer.hashicorp.com/vault/docs/commands/events) - Command documentation for event subscription
 - [Ansible Event-Driven Automation](https://ansible.readthedocs.io/projects/rulebook/) - Official Ansible EDA documentation
 - [WebSocket Protocol Specification](https://tools.ietf.org/html/rfc6455) - WebSocket protocol reference

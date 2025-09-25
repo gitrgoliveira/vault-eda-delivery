@@ -9,13 +9,13 @@ assignees: ''
 
 ## Release Information
 
-**Version**: v[VERSION] (e.g., v1.0.1)
+**Version**: v[VERSION] (e.g., v0.1.0)
 **Type**: [Major | Minor | Patch]
 
 ## Checklist
 
 ### Pre-Release
-- [ ] Version is updated in `collections/ansible_collections/gitrgoliveira/vault/galaxy.yml`.
+- [ ] Version is updated in `collections/ansible_collections/gitrgoliveira/vault_eda/galaxy.yml`.
 - [ ] `CHANGELOG.md` is updated with release notes.
 - [ ] All automated tests are passing.
 - [ ] Documentation is updated to reflect changes.
