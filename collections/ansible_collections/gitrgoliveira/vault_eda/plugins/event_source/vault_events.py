@@ -13,7 +13,7 @@ DOCUMENTATION = """
 ---
 name: vault_events
 description: HashiCorp Vault WebSocket event source for agentless secret rotation
-version: "0.1.0"
+version: "0.1.1"
 description:
   - This plugin connects to Vault's WebSocket event streaming endpoint and forwards
     events to ansible-rulebook for processing agentless secret rotation workflows.

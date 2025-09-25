@@ -9,7 +9,7 @@ assignees: ''
 
 ## Release Information
 
-**Version**: v[VERSION] (e.g., v0.1.0)
+**Version**: v[VERSION] (e.g., v0.1.1)
 **Type**: [Major | Minor | Patch]
 
 ## Checklist

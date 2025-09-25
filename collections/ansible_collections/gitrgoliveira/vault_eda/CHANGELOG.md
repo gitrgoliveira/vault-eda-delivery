@@ -7,6 +7,21 @@ All notable changes to this collection will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2025-09-25
+
+### Documentation
+
+- Enhanced README files with improved clarity and better path references for new directory structure.
+- Updated release request template to use v0.1.0 as example version.
+- Improved event handling rules and examples in documentation for better clarity.
+- Refined HCP Vault rulebook configuration with specific KV event paths instead of wildcards.
+- Enhanced plugin documentation with clearer examples and usage patterns.
+
+### Changed
+
+- Modified HCP Vault rulebook to specify targeted event paths (`kv-v2/data-write`, `kv-v2/data-patch`, `kv-v2/data-delete`) for more efficient event monitoring.
+- Updated .gitignore to exclude instruction files for cleaner repository structure.
+
 ## [0.1.0] - 2025-09-24
 
 ### Added
