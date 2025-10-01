@@ -1,6 +1,6 @@
 ---
 # Vault Event-Driven Automation Rulebook
-# This rulebook connects to HashiCorp Vault's WebSocket event stream
+# This rulebook connects to HashiCorp Vault Enterprise WebSocket event stream
 # and processes KV v2 and Database events in real-time
 # Note: Each event pattern creates a separate WebSocket connection
 # Supported event types: kv-v1/*, kv-v2/*, database/*

@@ -1,4 +1,10 @@
-# hcp-vault-test.yaml
+---
+# Vault Event-Driven Automation Rulebook
+# This rulebook connects to HCP Vault Dedicated WebSocket event stream
+# and processes KV v2 and Database events in real-time
+# Note: Each event pattern creates a separate WebSocket connection
+# Supported event types: kv-v1/*, kv-v2/*, database/*
+
 - name: HCP Vault Event Monitoring
   hosts: localhost
   sources:
