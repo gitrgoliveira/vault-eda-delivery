@@ -97,7 +97,7 @@ run-rulebook-bg:
 		export VAULT_ADDR=$${VAULT_ADDR:-http://127.0.0.1:8200} && \
 		export VAULT_TOKEN=$${VAULT_TOKEN:-myroot} && \
 		source .venv/bin/activate && \
-		ansible-rulebook -i inventory.yml -r vault-eda-rulebook.yaml --env-vars VAULT_ADDR,VAULT_TOKEN --verbose > rulebook.log 2>&1 & \
+		ansible-rulebook -i inventory.yml -r rulebooks/vault-eda-rulebook.yaml --env-vars VAULT_ADDR,VAULT_TOKEN --verbose > rulebook.log 2>&1 & \
 		echo $$! > rulebook.pid; \
 		sleep 3; \
 		echo "Rulebook started with PID $$(cat rulebook.pid)"; \
