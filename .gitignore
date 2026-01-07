@@ -1,5 +1,7 @@
 .vscode/
 .venv/
+.venv-*/
+*venv/
 .ansible/
 *.log
 *.pid
@@ -10,3 +12,6 @@ hcp.env
 
 .DS_Store
 .mypy_cache
+collections/ansible_collections/ansible
+collections/ansible_collections/ansible.eda-2.10.0.info
+collections/ansible_collections/gitrgoliveira/vault_eda/plugins/event_source/__pycache__

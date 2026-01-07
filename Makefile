@@ -1,8 +1,10 @@
-.PHONY: help install-vault start-vault stop-vault status-vault run-rulebook run-rulebook-bg stop-rulebook test-events clean setup-env compile-deps build-collection publish-collection release-collection
+.PHONY: help install-vault start-vault stop-vault status-vault run-rulebook run-rulebook-bg stop-rulebook test-events clean setup-env compile-deps build-collection publish-collection release-collection install-java check-java
 
 # Default target
 help:
 	@echo "Available targets:"
+	@echo "  install-java     - Install Java/OpenJDK (required for ansible-rulebook)"
+	@echo "  check-java       - Check if Java is installed"
 	@echo "  setup-env        - Set up environment and install dependencies"
 	@echo "  compile-deps     - Compile requirements.in to requirements.txt"
 	@echo "  start-vault      - Start Vault in dev mode"
@@ -22,27 +24,117 @@ help:
 	@echo "  VAULT_TOKEN      - Vault authentication token (default: myroot)"
 	@echo ""
 	@echo "Quick start:"
+	@echo "  make install-java  # First install Java"
+	@echo "  make setup-env     # Then setup environment"
 	@echo "  export VAULT_ADDR=http://127.0.0.1:8200 VAULT_TOKEN=myroot"
-	@echo "  make compile-deps && make setup-env && make start-vault && make run-rulebook-bg && make test-events"
+	@echo "  make start-vault && make run-rulebook-bg && make test-events"
+
+# Check if Java is installed
+check-java:
+	@echo "Checking Java installation..."
+	@if command -v java >/dev/null 2>&1; then \
+		echo "✓ Java is installed"; \
+		java -version 2>&1 | head -1; \
+	else \
+		echo "✗ Java is NOT installed"; \
+		echo "Run 'make install-java' to install it"; \
+		exit 1; \
+	fi
+	@echo "Checking Maven installation..."
+	@if command -v mvn >/dev/null 2>&1; then \
+		echo "✓ Maven is installed"; \
+		mvn -version 2>&1 | head -1; \
+	else \
+		echo "✗ Maven is NOT installed (required for jpy build)"; \
+		echo "Run 'make install-java' to install it"; \
+		exit 1; \
+	fi
+
+# Install Java/OpenJDK via Homebrew
+install-java:
+	@echo "Installing Java/OpenJDK and Maven..."
+	@if ! command -v brew >/dev/null 2>&1; then \
+		echo "ERROR: Homebrew not found. Install from https://brew.sh"; \
+		exit 1; \
+	fi
+	@echo "Installing OpenJDK via Homebrew..."
+	brew install openjdk
+	@echo "Installing Maven via Homebrew..."
+	brew install maven
+	@echo "Linking OpenJDK to system Java directories..."
+	sudo ln -sfn $$(brew --prefix)/opt/openjdk/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk.jdk || true
+	@echo "✓ Java and Maven installation complete!"
+	@echo "Verifying installation..."
+	@java -version 2>&1 | head -1
+	@mvn -version 2>&1 | head -1
 
 # Set up Python environment and dependencies
 setup-env:
 	@echo "Setting up environment..."
+	@echo "Checking for Java installation (required for drools-jpy)..."
+	@if ! command -v java >/dev/null 2>&1; then \
+		echo ""; \
+		echo "ERROR: Java not found. ansible-rulebook requires Java for drools-jpy."; \
+		echo "Run 'make install-java' to install Java and Maven"; \
+		exit 1; \
+	fi
+	@echo "Checking for Maven installation (required for jpy build)..."
+	@if ! command -v mvn >/dev/null 2>&1; then \
+		echo ""; \
+		echo "ERROR: Maven not found. jpy (required by drools-jpy) needs Maven to build."; \
+		echo "Run 'make install-java' to install Java and Maven"; \
+		exit 1; \
+	fi
+	@echo "✓ Java and Maven found"
 	python3 -m venv .venv
-	source .venv/bin/activate && pip install -r requirements.txt
+	@if [ -d "/opt/homebrew/opt/openjdk" ]; then \
+		echo "OpenJDK found, configuring Java environment..."; \
+		export PATH="/opt/homebrew/opt/openjdk/bin:$$PATH" && \
+		export JAVA_HOME="/opt/homebrew/opt/openjdk/libexec/openjdk.jdk/Contents/Home" && \
+		export DYLD_LIBRARY_PATH="$$JAVA_HOME/lib/server:$$DYLD_LIBRARY_PATH" && \
+		source .venv/bin/activate && pip install -r requirements.txt; \
+	else \
+		echo "Configuring system Java environment..."; \
+		export JAVA_HOME=$$(java -XshowSettings:properties -version 2>&1 | grep 'java.home' | awk '{print $$3}') && \
+		export DYLD_LIBRARY_PATH="$$JAVA_HOME/lib/server:$$DYLD_LIBRARY_PATH" && \
+		source .venv/bin/activate && pip install -r requirements.txt; \
+	fi
 	@echo "Environment setup complete!"
 
 # Compile requirements.in to requirements.txt using pip-compile
+# NOTE: This requires Java and Maven to resolve drools-jpy dependencies.
+# If you don't have them installed, run 'make install-java' first.
 compile-deps:
 	@echo "Compiling requirements.in to requirements.txt..."
-	@if [ ! -d ".venv" ]; then \
-		echo "Virtual environment not found. Creating one..."; \
-		python3 -m venv .venv; \
+	@echo ""
+	@echo "⚠️  WARNING: This requires Java + Maven to be installed"
+	@echo "    Run 'make check-java' to verify or 'make install-java' to install"
+	@echo ""
+	@if ! command -v java >/dev/null 2>&1 || ! command -v mvn >/dev/null 2>&1; then \
+		echo "ERROR: Java and/or Maven not found."; \
+		echo ""; \
+		echo "The 'jpy' package (required by drools-jpy) needs Java + Maven to compile."; \
+		echo ""; \
+		echo "SOLUTION:"; \
+		echo "  1. Run: make install-java"; \
+		echo "  2. Then: make compile-deps"; \
+		echo ""; \
+		echo "OR manually install:"; \
+		echo "  brew install openjdk maven"; \
+		echo ""; \
+		exit 1; \
 	fi
-	@source .venv/bin/activate && \
-	pip install --upgrade pip pip-tools && \
-	pip-compile --output-file=requirements.txt requirements.in
-	@echo "Dependencies compiled successfully!"
+	@if [ ! -d ".venv-compile" ]; then \
+		echo "Creating temporary venv for compilation..."; \
+		python3 -m venv .venv-compile; \
+	fi
+	@export PATH="/opt/homebrew/opt/openjdk/bin:$$PATH" && \
+	export JAVA_HOME="/opt/homebrew/opt/openjdk/libexec/openjdk.jdk/Contents/Home" && \
+	source .venv-compile/bin/activate && \
+	pip install --quiet --upgrade pip pip-tools && \
+	pip-compile --no-emit-index-url --resolver=backtracking --output-file=requirements.txt requirements.in
+	@rm -rf .venv-compile
+	@echo "✓ Dependencies compiled successfully!"
 
 # Start Vault in dev mode
 start-vault:
@@ -124,7 +216,7 @@ test-events:
 # Clean up everything
 clean: stop-vault stop-rulebook
 	@echo "Cleaning up..."
-	@rm -rf .venv/
+	@rm -rf .venv/ .venv-*/
 	@rm -f vault.log vault.pid rulebook.log rulebook.pid
 	@echo "Cleanup complete!"
 
