@@ -7,6 +7,25 @@ All notable changes to this collection will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2026-01-07
+
+### Changed
+
+- Updated aiohttp dependency from 3.12.15 to 3.13.3 for latest security fixes and performance improvements.
+- Updated filelock dependency from 3.19.1 to 3.20.2 and added as explicit dependency in requirements.in.
+- Enhanced Makefile with Java and Maven management targets for improved developer experience.
+- Added `install-java` target to install OpenJDK and Maven via Homebrew with proper system linking.
+- Added `check-java` target to verify Java and Maven installation with version output.
+- Improved `setup-env` target with prerequisite checks for Java and Maven, including clear error messages.
+- Enhanced `compile-deps` target with isolated temporary virtual environment and automatic cleanup.
+- Updated `clean` target to remove all virtual environment variations including temporary build environments.
+- Expanded .gitignore with comprehensive patterns for virtual environment folders and Python cache files.
+
+### Fixed
+
+- Resolved dependency compilation issues by ensuring Java and Maven are installed before building jpy package.
+- Fixed setup-env failures by adding prerequisite checks and helpful error messages guiding users to install-java target.
+
 ## [0.1.2] - 2025-12-12
 
 ### Changed

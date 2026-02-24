@@ -132,7 +132,7 @@ compile-deps:
 	export JAVA_HOME="/opt/homebrew/opt/openjdk/libexec/openjdk.jdk/Contents/Home" && \
 	source .venv-compile/bin/activate && \
 	pip install --quiet --upgrade pip pip-tools && \
-	pip-compile --no-emit-index-url --resolver=backtracking --output-file=requirements.txt requirements.in
+	pip-compile --no-emit-index-url --resolver=backtracking --upgrade --output-file=requirements.txt requirements.in
 	@rm -rf .venv-compile
 	@echo "✓ Dependencies compiled successfully!"
 
