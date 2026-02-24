@@ -42,7 +42,7 @@ cffi==2.0.0
     #   cryptography
 click==8.3.0
     # via black
-cryptography==46.0.1
+cryptography==46.0.5
     # via
     #   -r requirements.in
     #   ansible-core
