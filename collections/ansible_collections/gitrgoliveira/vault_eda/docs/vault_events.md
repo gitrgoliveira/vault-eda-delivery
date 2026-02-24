@@ -130,12 +130,6 @@ filter_expression: 'event_type == "kv-v2/data-write" or event_type == "kv-v2/dat
 - Complex nested field filtering may not work reliably for server-side filtering
 - Event data access in rulebook conditions uses nested paths like `event.data.event.metadata.data_path`
 - Filters are URL-encoded and applied at the Vault server level
-### Important notes
-
-- Server-side filtering uses the `event_type` field, which is different from the nested paths in the event data structure
-- Complex nested field filtering may not work reliably for server-side filtering
-- Event data access in rulebook conditions uses nested paths like `event.data.event.metadata.data_path`
-- Filters are URL-encoded and applied at the Vault server level
 
 ## Event data structure
 
@@ -181,7 +175,7 @@ filter_expression: '(data.event.metadata.data_path matches "^secret/data/prod/.*
       condition: event.data.event_type == "kv-v2/data-write"
       action:
         debug:
-          msg: "Secret written to {{ event.data.event.data.metadata.data_path }}"
+          msg: "Secret written to {{ event.data.event.metadata.data_path }}"
 ```
 
 ### Environment variable configuration
@@ -292,35 +286,34 @@ Events received from Vault follow the [CloudEvents specification](https://cloude
 
 ### Complete event structure
 
-Events received by the plugin have the following structure when accessed in rulebook conditions:
+Events received by the plugin have the following structure when accessed in rulebook conditions. This matches the [CloudEvents format documented by Vault](https://developer.hashicorp.com/vault/docs/concepts/events#event-notifications-format):
 
 ```json
 {
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "source": "vault://mycluster",
+  "specversion": "1.0",
+  "type": "*",
+  "datacontentype": "application/cloudevents",
+  "time": "2025-09-15T12:34:56.789Z",
   "data": {
-    "event_type": "kv-v2/data-write",
     "event": {
       "id": "550e8400-e29b-41d4-a716-446655440000",
-      "source": "https://vault.example.com:8200",
-      "specversion": "1.0",
-      "type": "kv-v2/data-write",
-      "datacontentype": "application/json",
-      "time": "2025-09-15T12:34:56.789Z",
-      "data": {
-        "path": "secret/data/myapp/config",
-        "metadata": {
-          "created_time": "2025-09-15T12:34:56.789Z",
-          "version": 1,
-          "destroyed": false,
-          "deletion_time": "",
-          "data_path": "secret/data/myapp/config",
-          "operation": "data-write"
-        }
+      "metadata": {
+        "current_version": "1",
+        "data_path": "secret/data/myapp/config",
+        "modified": "true",
+        "oldest_version": "0",
+        "operation": "data-write",
+        "path": "secret/data/myapp/config"
       }
     },
+    "event_type": "kv-v2/data-write",
     "plugin_info": {
-      "plugin": "kv",
-      "plugin_version": "v0.16.1",
-      "mount_path": "secret/"
+      "mount_class": "secret",
+      "mount_accessor": "kv_5dc4d18e",
+      "mount_path": "secret/",
+      "plugin": "kv"
     }
   }
 }
@@ -332,47 +325,49 @@ Events received by the plugin have the following structure when accessed in rule
 ```json
 {
   "data": {
-    "event_type": "kv-v2/data-write",
     "event": {
-      "data": {
-        "path": "secret/data/myapp/config",
-        "metadata": {
-          "created_time": "2025-09-15T12:34:56.789Z",
-          "version": 3,
-          "destroyed": false,
-          "data_path": "secret/data/myapp/config",
-          "operation": "data-write"
-        }
+      "id": "a3be9fb1-b514-519f-5b25-b6f144a8c1ce",
+      "metadata": {
+        "current_version": "3",
+        "data_path": "secret/data/myapp/config",
+        "modified": "true",
+        "oldest_version": "0",
+        "operation": "data-write",
+        "path": "secret/data/myapp/config"
       }
     },
+    "event_type": "kv-v2/data-write",
     "plugin_info": {
-      "plugin": "kv",
-      "mount_path": "secret/"
+      "mount_class": "secret",
+      "mount_accessor": "kv_5dc4d18e",
+      "mount_path": "secret/",
+      "plugin": "kv"
     }
   }
 }
 ```
 
 #### KV v2 Delete Event
+
+**Note**: Delete events do not include the `data_path` metadata field.
+
 ```json
 {
   "data": {
-    "event_type": "kv-v2/data-delete",
     "event": {
-      "data": {
-        "path": "secret/data/myapp/config", 
-        "metadata": {
-          "deletion_time": "2025-09-15T12:35:00.123Z",
-          "version": 3,
-          "destroyed": true,
-          "data_path": "secret/data/myapp/config",
-          "operation": "data-delete"
-        }
+      "id": "b4cf9fb2-c625-629f-6c36-c7f255b9d2df",
+      "metadata": {
+        "modified": "true",
+        "operation": "data-delete",
+        "path": "secret/data/myapp/config"
       }
     },
+    "event_type": "kv-v2/data-delete",
     "plugin_info": {
-      "plugin": "kv",
-      "mount_path": "secret/"
+      "mount_class": "secret",
+      "mount_accessor": "kv_5dc4d18e",
+      "mount_path": "secret/",
+      "plugin": "kv"
     }
   }
 }
@@ -382,20 +377,21 @@ Events received by the plugin have the following structure when accessed in rule
 ```json
 {
   "data": {
-    "event_type": "database/creds-create",
     "event": {
-      "data": {
-        "path": "database/creds/readonly",
-        "metadata": {
-          "created_time": "2025-09-15T12:36:00.456Z",
-          "operation": "creds-create",
-          "role_name": "readonly"
-        }
+      "id": "c5dg0gc3-d736-730g-7d47-d8g366c0e3eg",
+      "metadata": {
+        "modified": "true",
+        "name": "readonly",
+        "operation": "creds-create",
+        "path": "database/creds/readonly"
       }
     },
+    "event_type": "database/creds-create",
     "plugin_info": {
-      "plugin": "database",
-      "mount_path": "database/"
+      "mount_class": "secret",
+      "mount_accessor": "database_a1b2c3d4",
+      "mount_path": "database/",
+      "plugin": "database"
     }
   }
 }
@@ -413,10 +409,10 @@ rules:
       debug:
         msg: |
           Event Type: {{ event.data.event_type }}
-          Path: {{ event.data.event.data.path }}
-          Data Path: {{ event.data.event.data.metadata.data_path }}
-          Operation: {{ event.data.event.data.metadata.operation }}
-          Version: {{ event.data.event.data.metadata.version }}
+          Path: {{ event.data.event.metadata.path }}
+          Data Path: {{ event.data.event.metadata.data_path }}
+          Operation: {{ event.data.event.metadata.operation }}
+          Version: {{ event.data.event.metadata.current_version }}
           Plugin: {{ event.data.plugin_info.plugin }}
           Mount Path: {{ event.data.plugin_info.mount_path }}
 
@@ -426,23 +422,32 @@ rules:
       debug:
         msg: |
           Database Event: {{ event.data.event_type }}
-          Path: {{ event.data.event.data.path }}
-          Role: {{ event.data.event.data.metadata.role_name | default('N/A') }}
+          Path: {{ event.data.event.metadata.path }}
+          Name: {{ event.data.event.metadata.name | default('N/A') }}
           Plugin Mount: {{ event.data.plugin_info.mount_path }}
 ```
 
 ### Common event metadata fields
 
-- **event_type**: The type of event (e.g., "kv-v2/data-write", "database/creds-create")
-- **path**: Full Vault path where the event occurred
-- **data_path**: Data-specific path (for KV v2, includes "/data/")
-- **operation**: Operation performed (write, delete, patch, etc.)
-- **version**: Secret version (KV v2 only)
-- **created_time**: Timestamp when the event was created
-- **deletion_time**: Timestamp when deleted (delete events only)
-- **destroyed**: Boolean indicating if the secret is destroyed
-- **plugin**: Plugin type generating the event
-- **mount_path**: Mount path of the plugin
+These fields are inside `event.data.event.metadata` in rulebook access paths. For the authoritative list per event type, see the [official event types table](https://developer.hashicorp.com/vault/docs/concepts/events#event-types).
+
+- **path**: The API path that was invoked to generate the event (always present)
+- **data_path**: The API path that can be used to fetch the underlying data. Only present on certain event types (writes, patches, undelete, config-write, metadata-write). Not present on delete, destroy, or metadata-delete events.
+- **operation**: Operation performed (e.g., "data-write", "data-delete", "creds-create")
+- **modified**: Whether the event resulted in data modification ("true" or "false")
+- **current_version**: Current secret version as a string (KV v2 write/patch events)
+- **oldest_version**: Oldest available secret version as a string (KV v2 write/patch events)
+- **name**: Resource name (database events)
+- **vault_index**: Vault's storage index, usable with [consistency control headers](https://developer.hashicorp.com/vault/docs/enterprise/consistency#conditional-forwarding-performance-standbys-only) to avoid stale reads
+
+These fields are inside `event.data.plugin_info`:
+
+- **plugin**: Plugin type generating the event (e.g., "kv", "database")
+- **mount_path**: Mount path of the plugin (e.g., "secret/", "database/")
+- **mount_class**: Plugin class (e.g., "secret", "auth")
+- **mount_accessor**: Unique ID of the mounted plugin
+
+The top-level `event.data.event_type` field contains the event type (e.g., "kv-v2/data-write", "database/creds-create").
 
 **For complete event structure details**: See the [official event notifications format](https://developer.hashicorp.com/vault/docs/concepts/events#event-notifications-format) in the HashiCorp documentation.
 
