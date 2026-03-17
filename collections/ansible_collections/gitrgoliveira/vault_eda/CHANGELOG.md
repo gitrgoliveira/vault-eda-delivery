@@ -7,10 +7,19 @@ All notable changes to this collection will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.3] - 2026-01-07
+## [0.1.3] - 2026-03-17
+
+### Added
+
+- Added unit testing framework and configurations; implemented unit tests for vault_events module.
+- Added additional context to README files with HashiCorp resource link for agentless Vault secret automation.
 
 ### Changed
 
+- Updated workflows and documentation for Python 3.12 and Ansible 2.20.3 compatibility; adjusted requirements and error messages.
+- Updated requirements for ansible-rulebook and related dependencies; bumped versions for compatibility including cryptography (46.0.5) and black (26.3.1).
+- Enhanced Makefile with Python installation and version check.
+- Refactored event metadata access in README and vault_events documentation.
 - Updated aiohttp dependency from 3.12.15 to 3.13.3 for latest security fixes and performance improvements.
 - Updated filelock dependency from 3.19.1 to 3.20.2 and added as explicit dependency in requirements.in.
 - Enhanced Makefile with Java and Maven management targets for improved developer experience.
