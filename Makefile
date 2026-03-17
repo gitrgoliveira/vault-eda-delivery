@@ -1,4 +1,4 @@
-.PHONY: help install-vault start-vault stop-vault status-vault run-rulebook run-rulebook-bg stop-rulebook test-events clean setup-env compile-deps check-updates build-collection publish-collection release-collection install-java check-java install-python check-python
+.PHONY: help install-vault start-vault stop-vault status-vault run-rulebook run-rulebook-bg stop-rulebook test-events clean setup-env compile-deps check-updates build-collection publish-collection release-collection install-java check-java install-python check-python install-unit-test-deps test-unit test-coverage
 
 # Find the latest available installed Python 3 version
 PYTHON_BIN ?= $(shell command -v python3.14 2>/dev/null || command -v python3.13 2>/dev/null || command -v python3.12 2>/dev/null || command -v python3.11 2>/dev/null || command -v python3.10 2>/dev/null || command -v python3 2>/dev/null)
@@ -13,6 +13,9 @@ help:
 	@echo "  setup-env        - Set up environment and install dependencies"
 	@echo "  compile-deps     - Compile requirements.in to requirements.txt"
 	@echo "  check-updates    - Check for available dependency updates from requirements.in"
+	@echo "  install-unit-test-deps - Install unit test dependencies in .venv-unit"
+	@echo "  test-unit        - Run pytest unit tests"
+	@echo "  test-coverage    - Run unit tests with coverage report"
 	@echo "  start-vault      - Start Vault in dev mode"
 	@echo "  stop-vault       - Stop Vault server"
 	@echo "  status-vault     - Check Vault server status"
@@ -202,6 +205,35 @@ check-updates: check-java
 		echo ""; \
 		echo "Run 'make compile-deps' to apply updates."; \
 	fi
+
+# Install minimal dependencies required for local and CI unit testing.
+install-unit-test-deps:
+	@echo "Installing unit test dependencies..."
+	@if [ -z "$(PYTHON_BIN)" ]; then \
+		echo "ERROR: Python 3 is required to run unit tests."; \
+		exit 1; \
+	fi
+	@if [ ! -d ".venv-unit" ]; then \
+		echo "Creating .venv-unit with $$($(PYTHON_BIN) -V 2>&1)..."; \
+		$(PYTHON_BIN) -m venv .venv-unit; \
+	fi
+	@. .venv-unit/bin/activate && \
+		python -m pip install --upgrade pip && \
+		pip install -r unit-test-requirements.txt
+
+# Run unit tests with pytest.
+test-unit: install-unit-test-deps
+	@echo "Running unit tests..."
+	@. .venv-unit/bin/activate && \
+		pytest -q tests/unit
+
+# Run unit tests with coverage output.
+test-coverage: install-unit-test-deps
+	@echo "Running unit tests with coverage..."
+	@. .venv-unit/bin/activate && \
+		pytest --cov=collections/ansible_collections/gitrgoliveira/vault_eda/plugins/event_source \
+		--cov-report=term-missing \
+		tests/unit
 
 # Start Vault in dev mode
 start-vault:

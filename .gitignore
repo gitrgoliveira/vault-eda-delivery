@@ -12,6 +12,10 @@ hcp.env
 
 .DS_Store
 .mypy_cache
+.pytest_cache/
+.coverage
+__pycache__/
+*.py[cod]
 collections/ansible_collections/ansible
 collections/ansible_collections/ansible.eda-2.10.0.info
 collections/ansible_collections/gitrgoliveira/vault_eda/plugins/event_source/__pycache__
