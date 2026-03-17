@@ -6,6 +6,8 @@ This collection provides event source plugins for HashiCorp Vault integration wi
 
 The `gitrgoliveira.vault_eda` collection allows for agentless secret rotation and real-time monitoring of HashiCorp Vault events through WebSocket connections. It provides an event source plugin that connects to Vault's `/v1/sys/events/subscribe` endpoint and processes events in real-time for use with ansible-rulebook to trigger automated secret rotation workflows.
 
+For additional context and a demonstration of these capabilities, see the HashiCorp resource: [Agentless Vault Secret Automation with Event-Driven Ansible](https://www.hashicorp.com/en/resources/agentless-vault-secret-automation-with-event-driven-ansible).
+
 ## Features
 
 - **Agentless Secret Rotation**: Automated secret rotation triggered by Vault events.

@@ -2,6 +2,8 @@
 
 This repository provides tools for agentless delivery/rotation of HashiCorp Vault secrets using Ansible Event-Driven Automation (EDA). It includes a custom WebSocket plugin that connects to Vault's event streaming endpoint and processes events in real-time for automated secret rotation workflows.
 
+For additional context and a demonstration of these capabilities, see the HashiCorp resource: [Agentless Vault Secret Automation with Event-Driven Ansible](https://www.hashicorp.com/en/resources/agentless-vault-secret-automation-with-event-driven-ansible).
+
 ## Features
 
 - **Agentless Secret Rotation**: Automate secret rotation triggered by Vault events without requiring agents.
