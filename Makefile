@@ -1,12 +1,18 @@
-.PHONY: help install-vault start-vault stop-vault status-vault run-rulebook run-rulebook-bg stop-rulebook test-events clean setup-env compile-deps build-collection publish-collection release-collection install-java check-java
+.PHONY: help install-vault start-vault stop-vault status-vault run-rulebook run-rulebook-bg stop-rulebook test-events clean setup-env compile-deps check-updates build-collection publish-collection release-collection install-java check-java install-python check-python
+
+# Find the latest available installed Python 3 version
+PYTHON_BIN ?= $(shell command -v python3.14 2>/dev/null || command -v python3.13 2>/dev/null || command -v python3.12 2>/dev/null || command -v python3.11 2>/dev/null || command -v python3.10 2>/dev/null || command -v python3 2>/dev/null)
 
 # Default target
 help:
 	@echo "Available targets:"
+	@echo "  install-python   - Install latest Python via Homebrew (required for latest dependencies)"
+	@echo "  check-python     - Check Python version"
 	@echo "  install-java     - Install Java/OpenJDK (required for ansible-rulebook)"
 	@echo "  check-java       - Check if Java is installed"
 	@echo "  setup-env        - Set up environment and install dependencies"
 	@echo "  compile-deps     - Compile requirements.in to requirements.txt"
+	@echo "  check-updates    - Check for available dependency updates from requirements.in"
 	@echo "  start-vault      - Start Vault in dev mode"
 	@echo "  stop-vault       - Stop Vault server"
 	@echo "  status-vault     - Check Vault server status"
@@ -24,10 +30,34 @@ help:
 	@echo "  VAULT_TOKEN      - Vault authentication token (default: myroot)"
 	@echo ""
 	@echo "Quick start:"
-	@echo "  make install-java  # First install Java"
+	@echo "  make install-python # First install latest Python"
+	@echo "  make install-java  # Next install Java"
 	@echo "  make setup-env     # Then setup environment"
 	@echo "  export VAULT_ADDR=http://127.0.0.1:8200 VAULT_TOKEN=myroot"
 	@echo "  make start-vault && make run-rulebook-bg && make test-events"
+
+# Check Python version
+check-python:
+	@echo "Checking Python installation..."
+	@if [ -z "$(PYTHON_BIN)" ]; then \
+		echo "✗ Python 3 is NOT installed"; \
+		echo "Run 'make install-python' to install it"; \
+		exit 1; \
+	else \
+		echo "✓ Found: $$($(PYTHON_BIN) -V)"; \
+	fi
+
+# Install latest Python via Homebrew
+install-python:
+	@echo "Installing latest Python via Homebrew..."
+	@if ! command -v brew >/dev/null 2>&1; then \
+		echo "ERROR: Homebrew not found. Install from https://brew.sh"; \
+		exit 1; \
+	fi
+	brew install python
+	@echo "✓ Python installation complete!"
+	@echo "Verifying installation..."
+	@python3 -V
 
 # Check if Java is installed
 check-java:
@@ -86,7 +116,7 @@ setup-env:
 		exit 1; \
 	fi
 	@echo "✓ Java and Maven found"
-	python3 -m venv .venv
+	$(PYTHON_BIN) -m venv .venv
 	@if [ -d "/opt/homebrew/opt/openjdk" ]; then \
 		echo "OpenJDK found, configuring Java environment..."; \
 		export PATH="/opt/homebrew/opt/openjdk/bin:$$PATH" && \
@@ -126,15 +156,52 @@ compile-deps:
 	fi
 	@if [ ! -d ".venv-compile" ]; then \
 		echo "Creating temporary venv for compilation..."; \
-		python3 -m venv .venv-compile; \
+		$(PYTHON_BIN) -m venv .venv-compile; \
 	fi
 	@export PATH="/opt/homebrew/opt/openjdk/bin:$$PATH" && \
 	export JAVA_HOME="/opt/homebrew/opt/openjdk/libexec/openjdk.jdk/Contents/Home" && \
 	source .venv-compile/bin/activate && \
 	pip install --quiet --upgrade pip pip-tools && \
-	pip-compile --no-emit-index-url --resolver=backtracking --upgrade --output-file=requirements.txt requirements.in
+	pip-compile --strip-extras --no-emit-index-url --resolver=backtracking --upgrade --output-file=requirements.txt requirements.in
 	@rm -rf .venv-compile
 	@echo "✓ Dependencies compiled successfully!"
+
+# Check for dependency updates without modifying requirements.txt
+check-updates: check-java
+	@echo "Checking for dependency updates from requirements.in..."
+	@if [ -z "$(PYTHON_BIN)" ]; then \
+		echo "ERROR: Python 3 is required to check dependency updates."; \
+		exit 1; \
+	fi; \
+	if ! $(PYTHON_BIN) -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 10) else 1)'; then \
+		echo "ERROR: Python 3.10+ is required to resolve requirements.in."; \
+		echo "Found: $$($(PYTHON_BIN) -V 2>&1)"; \
+		exit 1; \
+	fi; \
+	if [ ! -d ".venv-compile" ]; then \
+		echo "Creating temporary venv for dependency check with $$($(PYTHON_BIN) -V 2>&1)..."; \
+		$(PYTHON_BIN) -m venv .venv-compile; \
+	fi
+	@TMP_REQ=$$(mktemp); \
+	TMP_CURRENT=$$(mktemp); \
+	TMP_NEW=$$(mktemp); \
+	DIFF_FILE=$$(mktemp); \
+	trap 'rm -f "$$TMP_REQ" "$$TMP_CURRENT" "$$TMP_NEW" "$$DIFF_FILE"; rm -rf .venv-compile' EXIT; \
+	export PATH="/opt/homebrew/opt/openjdk/bin:$$PATH" && \
+	export JAVA_HOME="/opt/homebrew/opt/openjdk/libexec/openjdk.jdk/Contents/Home" && \
+	source .venv-compile/bin/activate && \
+	pip install --quiet --upgrade pip pip-tools && \
+	pip-compile --quiet --strip-extras --no-emit-index-url --resolver=backtracking --upgrade --output-file=$$TMP_REQ requirements.in && \
+	grep -E '^[A-Za-z0-9_.-]+(\[[^]]+\])?==[^[:space:]]+' requirements.txt > $$TMP_CURRENT && \
+	grep -E '^[A-Za-z0-9_.-]+(\[[^]]+\])?==[^[:space:]]+' $$TMP_REQ > $$TMP_NEW && \
+	if diff -u $$TMP_CURRENT $$TMP_NEW > $$DIFF_FILE; then \
+		echo "requirements.txt is already up to date."; \
+	else \
+		echo "Dependency updates are available:"; \
+		cat $$DIFF_FILE; \
+		echo ""; \
+		echo "Run 'make compile-deps' to apply updates."; \
+	fi
 
 # Start Vault in dev mode
 start-vault:
