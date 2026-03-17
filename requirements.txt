@@ -23,7 +23,7 @@ ansible-core==2.20.3
     #   ansible-lint
 ansible-lint==26.3.0
     # via -r requirements.in
-ansible-rulebook==1.1.1
+ansible-rulebook==1.2.1
     # via -r requirements.in
 ansible-runner==2.4.3
     # via
@@ -52,7 +52,7 @@ distro==1.9.0
     # via ansible-lint
 dpath==2.2.0
     # via ansible-rulebook
-drools-jpy==0.3.9
+drools-jpy==0.3.14
     # via ansible-rulebook
 filelock==3.25.2
     # via ansible-lint
@@ -62,7 +62,7 @@ frozenlist==1.8.0
     #   aiosignal
 idna==3.11
     # via yarl
-janus==2.0.0
+janus==1.2.0
     # via ansible-rulebook
 jinja2==3.1.6
     # via
@@ -150,7 +150,7 @@ watchdog==6.0.0
     # via ansible-rulebook
 wcmatch==10.1
     # via ansible-lint
-websockets==16.0
+websockets==15.0.1
     # via
     #   -r requirements.in
     #   ansible-rulebook
