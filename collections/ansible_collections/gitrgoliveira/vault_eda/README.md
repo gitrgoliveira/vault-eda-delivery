@@ -2,16 +2,6 @@
 
 This collection provides event source plugins for HashiCorp Vault integration with Ansible Event-Driven Automation (EDA) for agentless rotation of Vault secrets through real-time event monitoring.
 
-## Requirements
-
-### Vault Enterprise or HCP Vault Dedicated only
-
-**Important**: This collection requires **HashiCorp Vault Enterprise** or **HCP Vault Dedicated**. Event streaming is **not available** in Vault Community Edition.
-
-- **Vault Enterprise**: Version 1.13+ (enabled by default in 1.16+)
-- **HCP Vault Dedicated**: Event streaming supported
-- **Vault OSS/Community**: Not supported
-
 ## Description
 
 The `gitrgoliveira.vault_eda` collection allows for agentless secret rotation and real-time monitoring of HashiCorp Vault events through WebSocket connections. It provides an event source plugin that connects to Vault's `/v1/sys/events/subscribe` endpoint and processes events in real-time for use with ansible-rulebook to trigger automated secret rotation workflows.
@@ -31,10 +21,18 @@ The `gitrgoliveira.vault_eda` collection allows for agentless secret rotation an
 ## Requirements
 
 - **Vault Enterprise 1.13+** or **HCP Vault Dedicated** (event streaming not available in Community Edition)
-- Python 3.7+
-- ansible-core >= 2.14
-- ansible-rulebook >= 1.0.0
+- Python 3.12+
+- ansible-core >= 2.20.0
+- ansible-rulebook >= 1.2.1
 - websockets >= 10.0
+
+### Vault Enterprise or HCP Vault Dedicated only
+
+**Important**: This collection requires **HashiCorp Vault Enterprise** or **HCP Vault Dedicated**. Event streaming is **not available** in Vault Community Edition.
+
+- **Vault Enterprise**: Version 1.13+ (enabled by default in 1.16+)
+- **HCP Vault Dedicated**: Event streaming supported
+- **Vault OSS/Community**: Not supported
 
 ### Required Vault ACL policies
 

@@ -177,7 +177,7 @@ check-updates: check-java
 		exit 1; \
 	fi; \
 	if ! $(PYTHON_BIN) -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 10) else 1)'; then \
-		echo "ERROR: Python 3.10+ is required to resolve requirements.in."; \
+		echo "ERROR: Python 3.12+ is required to resolve requirements.in."; \
 		echo "Found: $$($(PYTHON_BIN) -V 2>&1)"; \
 		exit 1; \
 	fi; \

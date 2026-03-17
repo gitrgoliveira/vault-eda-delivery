@@ -22,18 +22,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12']
-        ansible-core-version: ['2.14', '2.15', '2.16', '2.17']
-        exclude:
-          # Exclude incompatible combinations
-          - python-version: '3.9'
-            ansible-core-version: '2.16'
-          - python-version: '3.9'
-            ansible-core-version: '2.17'
-          - python-version: '3.12'
-            ansible-core-version: '2.14'
-          - python-version: '3.12'
-            ansible-core-version: '2.15'
+        python-version: ['3.12']
+        ansible-core-version: ['2.20']
     
     steps:
     - name: Checkout repository
@@ -95,7 +85,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        python-version: '3.12'
         
     - name: Cache pip dependencies
       uses: actions/cache@v4
@@ -109,7 +99,7 @@ jobs:
     - name: Install Ansible and dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install ansible-core>=2.14 websockets>=10.0 PyYAML
+        pip install ansible-core==2.20.3 websockets>=10.0 PyYAML
         
     - name: Validate galaxy.yml structure
       run: |
@@ -280,9 +270,9 @@ jobs:
           
           ### 📋 Requirements
           - **HashiCorp Vault Enterprise** 1.13+ or **HCP Vault Dedicated**
-          - Python 3.9+
-          - ansible-core >= 2.14
-          - ansible-rulebook >= 1.0.0
+          - Python 3.12+
+          - ansible-core == 2.20.3
+          - ansible-rulebook >= 1.2.1
           - websockets >= 10.0
           
           ### 📝 Changes

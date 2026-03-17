@@ -17,13 +17,14 @@ This repository provides tools for agentless delivery/rotation of HashiCorp Vaul
 Before you begin, ensure you have the following components installed and configured:
 
 1. **Vault Enterprise or HCP Vault Dedicated**: This project requires Vault v1.13+ or HCP Vault Dedicated. Event streaming is not available in the Community Edition.
-2. **Python**: You need Python 3.7+ with `venv` support.
-3. **Java**: `ansible-rulebook` requires a Java Runtime Environment (JRE) or Java Development Kit (JDK).
-4. **Vault ACL Policy**: You must have a Vault token with a policy granting permissions to subscribe to events and manage secrets.
+2. **Python**: You need Python 3.12+ with `venv` support.
+3. **Ansible runtime**: Use `ansible-core` 2.20.3 and `ansible-rulebook` 1.2.1.
+4. **Java**: `ansible-rulebook` requires a Java Runtime Environment (JRE) or Java Development Kit (JDK).
+5. **Vault ACL Policy**: You must have a Vault token with a policy granting permissions to subscribe to events and manage secrets.
 
 ## Quick start
 
-This section guides you through the fastest way to get the project running. The `make` commands automate the setup and execution.
+Follow these steps to configure and start the project quickly. The `make` commands automate the setup and execution.
 
 1. **Set environment variables**:
    Export the address of your Vault server and an authentication token.
@@ -56,7 +57,7 @@ This section guides you through the fastest way to get the project running. The 
    ```
 
 5. **Monitor the logs**:
-   You can view the live output and captured events in the log file.
+   View the live output and captured events in the log file.
 
    ```bash
    tail -f rulebook.log
@@ -64,11 +65,11 @@ This section guides you through the fastest way to get the project running. The 
 
 ## Configuration
 
-To customize the behavior of the automation, you can adjust the following settings.
+Adjust the following settings to customize the automation behavior.
 
 ### Environment variables
 
-The Ansible rulebook uses environment variables to connect to Vault. You can configure them by using the `--env-vars` parameter or exporting them in your shell.
+The Ansible rulebook uses environment variables to connect to Vault. Configure them using the `--env-vars` parameter or by exporting them in your shell.
 
 - `VAULT_ADDR`: The URL of your Vault server (default: `http://127.0.0.1:8200`).
 - `VAULT_TOKEN`: A Vault authentication token with the required permissions (default: `myroot`).
@@ -172,7 +173,7 @@ path "auth/token/lookup-self" {
 }
 ```
 
-To apply the policy and create a token, you can run the following commands:
+Run the following commands to apply the policy and create a token:
 
 ```bash
 # Save the policy to a file (e.g., eda-policy.hcl)
@@ -184,7 +185,7 @@ vault token create -policy=eda-automation -ttl=24h
 
 ### Event subscription paths
 
-You can configure which Vault events to monitor by editing the `event_paths` in `vault-eda-rulebook.yaml`. For a complete and up-to-date list of event types, refer to the [official Vault documentation on Event Notifications](https://developer.hashicorp.com/vault/docs/concepts/events).
+Configure which Vault events to monitor by editing the `event_paths` in `vault-eda-rulebook.yaml`. For a complete and up-to-date list of event types, refer to the [official Vault documentation on Event Notifications](https://developer.hashicorp.com/vault/docs/concepts/events).
 
 Example configuration showing supported event types:
 
@@ -204,7 +205,7 @@ event_paths:
 
 ## Development setup
 
-This section provides detailed instructions for setting up the environment manually.
+Follow these steps to manually set up the environment.
 
 ### Vault Enterprise requirements
 
@@ -251,7 +252,7 @@ The project uses a Python virtual environment to manage dependencies.
 
 ### Java requirement for Ansible Rulebook
 
-`ansible-rulebook` requires a Java environment to run. If you are on macOS and use Homebrew, you can install it and configure the required environment variables.
+`ansible-rulebook` requires a Java environment to run. If you use macOS and Homebrew, install it and configure the required environment variables.
 
 1. **Install OpenJDK**:
 
@@ -296,7 +297,7 @@ make clean              # Stop all processes and clean up log files
 
 ## Architecture
 
-This section describes the components and data flow of the project.
+Review the components and data flow of the project.
 
 ### Component overview
 
@@ -336,7 +337,7 @@ The event-driven process follows these steps:
 
 ## Troubleshooting
 
-If you encounter issues, refer to the following common problems and solutions.
+Refer to the following common problems and solutions if you encounter issues.
 
 ### Common issues
 
@@ -422,7 +423,7 @@ Use the following commands to troubleshoot issues:
 - **Process Status**: `make status-vault` and check rulebook PID
 - **Manual Testing**: Create secrets manually to test event generation
 
-Events are captured and logged with structured debug output:
+The rulebook captures and logs events with structured debug output:
 
 ```
 ** 2025-09-15 23:03:18.028740 [debug] ******************************************

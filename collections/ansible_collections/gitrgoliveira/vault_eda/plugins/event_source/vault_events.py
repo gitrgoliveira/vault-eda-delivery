@@ -101,7 +101,7 @@ options:
     example: 'event_type == "kv-v2/data-write"'
 
 requirements:
-  - python >= 3.7
+  - python >= 3.12
   - websockets >= 10.0
   - asyncio
   - HashiCorp Vault Enterprise 1.13+ or HCP Vault Dedicated with event streaming enabled

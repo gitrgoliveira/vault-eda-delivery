@@ -1,4 +1,4 @@
-ansible-rulebook>=1.2.0
+ansible-rulebook>=1.2.1
 ansible>=2.17.0
 ansible-lint>=25.9.0
 websockets>=15.0.0
