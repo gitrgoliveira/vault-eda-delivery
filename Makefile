@@ -276,6 +276,17 @@ status-vault:
 		echo "Vault is not running"; \
 	fi
 
+# Run the rulebook in foreground
+run-rulebook:
+	@echo "Starting Vault EDA rulebook in foreground..."
+	@export PATH="/opt/homebrew/opt/openjdk/bin:$$PATH" && \
+	export JAVA_HOME="/opt/homebrew/opt/openjdk/libexec/openjdk.jdk/Contents/Home" && \
+	export DYLD_LIBRARY_PATH="$$JAVA_HOME/lib/server:$$DYLD_LIBRARY_PATH" && \
+	export VAULT_ADDR=$${VAULT_ADDR:-http://127.0.0.1:8200} && \
+	export VAULT_TOKEN=$${VAULT_TOKEN:-myroot} && \
+	. .venv-unit/bin/activate && \
+	ansible-rulebook -i inventory.yml -r rulebooks/vault-eda-rulebook.yaml --env-vars VAULT_ADDR,VAULT_TOKEN --verbose
+
 # Run the rulebook in background
 run-rulebook-bg:
 	@echo "Starting Vault EDA rulebook in background..."
@@ -287,7 +298,7 @@ run-rulebook-bg:
 		export DYLD_LIBRARY_PATH="$$JAVA_HOME/lib/server:$$DYLD_LIBRARY_PATH" && \
 		export VAULT_ADDR=$${VAULT_ADDR:-http://127.0.0.1:8200} && \
 		export VAULT_TOKEN=$${VAULT_TOKEN:-myroot} && \
-		source .venv/bin/activate && \
+		. .venv-unit/bin/activate && \
 		ansible-rulebook -i inventory.yml -r rulebooks/vault-eda-rulebook.yaml --env-vars VAULT_ADDR,VAULT_TOKEN --verbose > rulebook.log 2>&1 & \
 		echo $$! > rulebook.pid; \
 		sleep 3; \
