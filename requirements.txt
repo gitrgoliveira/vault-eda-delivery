@@ -6,30 +6,30 @@
 #
 aiohappyeyeballs==2.6.1
     # via aiohttp
-aiohttp==3.13.4
+aiohttp==3.13.5
     # via
     #   -r requirements.in
     #   ansible-rulebook
 aiosignal==1.4.0
     # via aiohttp
-ansible==13.4.0
+ansible==13.6.0
     # via -r requirements.in
-ansible-compat==25.12.1
+ansible-compat==26.3.0
     # via ansible-lint
-ansible-core==2.20.3
+ansible-core==2.20.5
     # via
     #   ansible
     #   ansible-compat
     #   ansible-lint
-ansible-lint==26.3.0
+ansible-lint==26.4.0
     # via -r requirements.in
-ansible-rulebook==1.2.1
+ansible-rulebook==1.2.2
     # via -r requirements.in
 ansible-runner==2.4.3
     # via
     #   -r requirements.in
     #   ansible-rulebook
-attrs==25.4.0
+attrs==26.1.0
     # via
     #   aiohttp
     #   jsonschema
@@ -42,9 +42,9 @@ cffi==2.0.0
     # via
     #   ansible-lint
     #   cryptography
-click==8.3.1
+click==8.3.3
     # via black
-cryptography==46.0.7
+cryptography==48.0.0
     # via
     #   ansible-core
     #   ansible-lint
@@ -54,13 +54,13 @@ dpath==2.2.0
     # via ansible-rulebook
 drools-jpy==0.3.14
     # via ansible-rulebook
-filelock==3.25.2
+filelock==3.29.0
     # via ansible-lint
 frozenlist==1.8.0
     # via
     #   aiohttp
     #   aiosignal
-idna==3.11
+idna==3.13
     # via yarl
 janus==1.2.0
     # via ansible-rulebook
@@ -68,7 +68,7 @@ jinja2==3.1.6
     # via
     #   ansible-core
     #   ansible-rulebook
-jpy==1.3.0
+jpy==1.4.0
     # via drools-jpy
 jsonschema==4.26.0
     # via
@@ -87,7 +87,7 @@ multidict==6.7.1
     #   yarl
 mypy-extensions==1.1.0
     # via black
-packaging==26.0
+packaging==26.2
     # via
     #   ansible-compat
     #   ansible-core
@@ -101,15 +101,15 @@ pathspec==1.0.4
     #   yamllint
 pexpect==4.9.0
     # via ansible-runner
-platformdirs==4.9.4
+platformdirs==4.9.6
     # via black
 propcache==0.4.1
     # via
     #   aiohttp
     #   yarl
-psycopg==3.3.3
+psycopg==3.3.4
     # via ansible-rulebook
-psycopg-binary==3.3.3
+psycopg-binary==3.3.4
     # via psycopg
 ptyprocess==0.7.0
     # via pexpect
@@ -154,7 +154,7 @@ websockets==15.0.1
     # via
     #   -r requirements.in
     #   ansible-rulebook
-xxhash==3.6.0
+xxhash==3.7.0
     # via ansible-rulebook
 yamllint==1.38.0
     # via ansible-lint
