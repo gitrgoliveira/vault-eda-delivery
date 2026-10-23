@@ -34,7 +34,7 @@ attrs==26.1.0
     #   aiohttp
     #   jsonschema
     #   referencing
-black==26.3.1
+black==26.10.1
     # via ansible-lint
 bracex==2.6
     # via wcmatch
@@ -81,7 +81,7 @@ lockfile==0.12.2
     # via python-daemon
 markupsafe==3.0.3
     # via jinja2
-multidict==6.7.1
+multidict==6.9.1
     # via
     #   aiohttp
     #   yarl
