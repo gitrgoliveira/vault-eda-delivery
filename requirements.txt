@@ -54,7 +54,7 @@ dpath==2.2.0
     # via ansible-rulebook
 drools-jpy==0.3.14
     # via ansible-rulebook
-filelock==3.29.0
+filelock==4.2.1
     # via ansible-lint
 frozenlist==1.8.0
     # via
