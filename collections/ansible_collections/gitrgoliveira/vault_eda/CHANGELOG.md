@@ -7,6 +7,14 @@ All notable changes to this collection will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.6] - 2026-11-26
+
+### Changed
+
+- Refreshed requirements.txt, including ansible 13.6.0 to 14.6.0, ansible-core 2.20.11 to 2.21.6, ansible-rulebook 1.2.2 to 1.3.2, aiohttp 3.14.4 to 3.14.5 and cryptography 50.0.0 to 50.0.2.
+- Updated wcmatch from 10.1 to 12.0.4. Version 10.1 is affected by a ReDoS advisory.
+- Compiled requirements.txt with Python 3.12 to match CI.
+
 ## [0.1.5] - 2026-11-10
 
 ### Changed
